@@ -266,8 +266,8 @@ test03CanMoveInstVarWhenThereIsAReferenceToSourceIV
 	
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 11/26/2022 01:28:39'!
-test03MoveInstVarWithNoReferencesShouldNotCreateGetterOnTarget
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:08:47'!
+test04MoveInstVarWithNoReferencesShouldNotCreateGetterOnTarget
 
 	| refactoring sourceClass targetClass targetMessages |
 	
@@ -281,8 +281,8 @@ test03MoveInstVarWithNoReferencesShouldNotCreateGetterOnTarget
 	self deny: (targetMessages includes: #iv1).
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/26/2022 19:04:31'!
-test03_01CanMoveInstVarWhenThereIsAReferenceToSourceIV
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:08:37'!
+test05CanMoveInstVarWhenThereIsAReferenceToSourceIV
 
 	| refactoring sourceClass targetClass |
 	
@@ -297,8 +297,8 @@ test03_01CanMoveInstVarWhenThereIsAReferenceToSourceIV
 	self assert: 'iv5 ^iv3 iv5' equals: (sourceClass compiledMethodAt: #iv5) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 11/26/2022 01:28:40'!
-test03_1MoveInstVarWithNoReaderReferencesShouldNotCreateGetterOnTarget
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:08:32'!
+test06MoveInstVarWithNoReaderReferencesShouldNotCreateGetterOnTarget
 
 	| refactoring sourceClass targetClass targetMessages |
 	
@@ -313,8 +313,8 @@ test03_1MoveInstVarWithNoReaderReferencesShouldNotCreateGetterOnTarget
 	self deny: (targetMessages includes: #iv1).
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/26/2022 19:05:38'!
-test04CanMoveInstVarWhenThereAreTwoReferencesToSourceIV
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:08:28'!
+test07CanMoveInstVarWhenThereAreTwoReferencesToSourceIV
 
 	| refactoring sourceClass targetClass |
 	
@@ -331,8 +331,8 @@ test04CanMoveInstVarWhenThereAreTwoReferencesToSourceIV
 	self assert: 'secondRef ^iv2 iv5' equals: (sourceClass compiledMethodAt: #secondRef) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/26/2022 19:06:11'!
-test05CanMoveInstVarWhenThereIsAWriteReferencesToSourceIV
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:08:21'!
+test08CanMoveInstVarWhenThereIsAWriteReferencesToSourceIV
 
 	| refactoring sourceClass targetClass |
 	
@@ -349,8 +349,8 @@ test05CanMoveInstVarWhenThereIsAWriteReferencesToSourceIV
 	self assert: 'iv5: anObject iv2 iv5: anObject.' equals: (sourceClass compiledMethodAt: #iv5:) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/26/2022 19:06:27'!
-test06CanMoveInstVarWhenThereIsAWriteReferencesToSourceIV
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:08:13'!
+test09CanMoveInstVarWhenThereIsAWriteReferencesToSourceIV
 
 	| refactoring sourceClass targetClass |
 	
@@ -367,8 +367,8 @@ test06CanMoveInstVarWhenThereIsAWriteReferencesToSourceIV
 	self assert: 'iv6: anObject iv2 iv6: anObject.' equals: (sourceClass compiledMethodAt: #iv6:) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/26/2022 19:08:10'!
-test07IdentationShouldNotBeAProblemToMoveInstVar
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:08:06'!
+test10IdentationShouldNotBeAProblemToMoveInstVar
 
 	| refactoring sourceClass targetClass |
 	
@@ -385,8 +385,8 @@ test07IdentationShouldNotBeAProblemToMoveInstVar
 	self assert: self expectedCodeWitBadIdentation equals: (sourceClass compiledMethodAt: #iv6:) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/26/2022 19:10:47'!
-test08CanMoveInstVarWhenThereAreTwoAssignationsOnSameMethod
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:08:01'!
+test11CanMoveInstVarWhenThereAreTwoAssignationsOnSameMethod
 
 	| refactoring sourceClass targetClass |
 	
@@ -402,8 +402,8 @@ test08CanMoveInstVarWhenThereAreTwoAssignationsOnSameMethod
 	self assert: 'iv6: anObject iv6 := anObject. ^anObject' equals: (targetClass compiledMethodAt: #iv6:) sourceCode.
 	self assert: self setterWithTwoAssignationsAfterRefactoring equals: (sourceClass compiledMethodAt: #iv6:) sourceCode.! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/26/2022 19:14:16'!
-test09CanMoveInstVarWhenThereAreTwoAssignationsOnSameMethod
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:07:56'!
+test12CanMoveInstVarWhenThereAreTwoAssignationsOnSameMethod
 
 	| refactoring sourceClass targetClass |
 	
@@ -430,8 +430,8 @@ iv2 iv6: tmpvar.' equals: (sourceClass compiledMethodAt: #iv6:) sourceCode.
 
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/26/2022 19:15:28'!
-test10CanMoveInstVarWhenThereAreTwoReadReferencesToSourceIV
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:07:50'!
+test13CanMoveInstVarWhenThereAreTwoReadReferencesToSourceIV
 
 	| refactoring sourceClass targetClass |
 	
@@ -453,8 +453,8 @@ iv2 iv6.
 ^iv2 iv6' equals: (sourceClass compiledMethodAt: #iv6) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/24/2022 16:31:38'!
-test10CanMoveInstVarWhenThereIsAReadReferencesInAssignation
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:07:45'!
+test14CanMoveInstVarWhenThereIsAReadReferencesInAssignation
 
 	| refactoring sourceClass targetClass |
 	
@@ -474,8 +474,8 @@ tmp := iv2 iv6 byteAt: 2.
 ^tmp' equals: (sourceClass compiledMethodAt: #readOnAssign) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/26/2022 19:20:36'!
-test11CanMoveInstVarWhenThereIsAMixedReferencesToSourceIV
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:07:40'!
+test15CanMoveInstVarWhenThereIsAMixedReferencesToSourceIV
 
 	| refactoring sourceClass targetClass |
 	
@@ -497,8 +497,8 @@ test11CanMoveInstVarWhenThereIsAMixedReferencesToSourceIV
 	^iv3.' equals: (sourceClass compiledMethodAt: #iv1:) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/26/2022 19:22:54'!
-test11_01CanMoveInstVarWhenThereIsAMixedReferencesToSourceIV
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:07:22'!
+test16CanMoveInstVarWhenThereIsAMixedReferencesToSourceIV
 
 	| refactoring sourceClass targetClass |
 	
@@ -518,8 +518,8 @@ iv3 := 1.
 ^iv3.' equals: (sourceClass compiledMethodAt: #iv1:) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/26/2022 19:26:11'!
-test12SubClassReadMethodsShouldBeRefactored
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:07:13'!
+test17SubClassReadMethodsShouldBeRefactored
 
 	| refactoring sourceClass targetClass sourceSuperClass |
 	sourceSuperClass := self createClassNamed: #SourceSuperClass instanceVariableNames:'iv6 iv2'.
@@ -538,8 +538,8 @@ test12SubClassReadMethodsShouldBeRefactored
 
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/26/2022 19:26:30'!
-test12SubClassWriteMethodsShouldBeRefactored
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:07:07'!
+test18SubClassWriteMethodsShouldBeRefactored
 
 	| refactoring sourceClass targetClass sourceSuperClass |
 	sourceSuperClass := self createClassNamed: #SourceSuperClass instanceVariableNames:'iv6 iv2'.
@@ -558,8 +558,8 @@ test12SubClassWriteMethodsShouldBeRefactored
 
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/20/2022 17:41:58'!
-test13MixedMethodsShouldBeRefactored
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:07:01'!
+test19MixedMethodsShouldBeRefactored
 
 	| refactoring sourceClass targetClass |
 	
@@ -579,8 +579,8 @@ iv2 iv5: 1.
 ^iv2 iv5' equals: (sourceClass compiledMethodAt: #iv5) sourceCode.
 ! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/20/2022 17:42:10'!
-test14MixedMethodsShouldBeRefactored
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:06:54'!
+test20MixedMethodsShouldBeRefactored
 
 	| refactoring sourceClass targetClass |
 	
@@ -604,8 +604,8 @@ iv2 iv5: 1.
 ^iv2 iv5' equals: (sourceClass compiledMethodAt: #iv5) sourceCode.
 ! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/20/2022 17:42:18'!
-test15MixedMethodsShouldBeRefactoredInSubclass
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:06:47'!
+test21MixedMethodsShouldBeRefactoredInSubclass
 
 	| refactoring sourceClass targetClass sourceSuperClass |
 	sourceSuperClass := self createClassNamed: #SourceSuperClass instanceVariableNames:'iv2 iv5'.
@@ -629,8 +629,8 @@ iv2 iv5: 1.
 ^iv2 iv5' equals: (sourceClass compiledMethodAt: #iv5) sourceCode.
 ! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 11/26/2022 01:28:40'!
-test16WriteMethodsWithSameBlockCodeShouldBeRefactored
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:06:36'!
+test22WriteMethodsWithSameBlockCodeShouldBeRefactored
 
 	| refactoring sourceClass targetClass |
 	sourceClass := self createClassNamed: #SourceClass instanceVariableNames:'iv6 iv2 iv1'.
@@ -649,8 +649,8 @@ iv2 iv6: anObject' equals: (sourceClass compiledMethodAt: #iv6:) sourceCode.
 iv2 iv6: anObject.' equals: (sourceClass compiledMethodAt: #iv66:) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 11/26/2022 01:28:39'!
-test17MoveInstVarWithNoReadReferencesOnIVShouldNotCreateGetterOnTarget
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:06:29'!
+test23MoveInstVarWithNoReadReferencesOnIVShouldNotCreateGetterOnTarget
 
 	| refactoring sourceClass targetClass targetMessages |
 	
@@ -668,8 +668,8 @@ iv3 := 1.
 	self deny: (targetMessages includes: #iv1).
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/20/2022 17:42:31'!
-test18CanMoveInstVarWhenThereIsAWriteReferencesAndKeywordMessage
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:06:22'!
+test24CanMoveInstVarWhenThereIsAWriteReferencesAndKeywordMessage
 
 	| refactoring sourceClass targetClass |
 	
@@ -692,8 +692,8 @@ test18CanMoveInstVarWhenThereIsAWriteReferencesAndKeywordMessage
 	^iv3.' equals: (sourceClass compiledMethodAt: #iv1:) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 11/27/2022 18:59:58'!
-test19ThereAreOnly2VersionsAfterRefactoringMethodWithTwoWriteReferences
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:06:16'!
+test25ThereAreOnly2VersionsAfterRefactoringMethodWithTwoWriteReferences
 
 	| refactoring sourceClass targetClass |
 	
@@ -706,8 +706,8 @@ test19ThereAreOnly2VersionsAfterRefactoringMethodWithTwoWriteReferences
 	
 	self assert: 2 equals: (VersionsBrowser versionCountForSelector: #iv6: class: sourceClass).! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 11/27/2022 19:00:24'!
-test20ThereAreOnly2VersionsAfterRefactoringMethodWithTwoReadReferences
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:06:02'!
+test26ThereAreOnly2VersionsAfterRefactoringMethodWithTwoReadReferences
 
 	| refactoring sourceClass targetClass |
 	
@@ -725,8 +725,8 @@ iv6.
 	self assert: 2 equals: (VersionsBrowser versionCountForSelector: #iv6 class: sourceClass).
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 11/29/2022 00:05:54'!
-test21ThereAreOnly2VersionsAfterRefactoringMethodWithMixedReferences
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:05:54'!
+test27ThereAreOnly2VersionsAfterRefactoringMethodWithMixedReferences
 
 	| refactoring sourceClass targetClass |
 	
@@ -744,8 +744,8 @@ iv6 := 1.
 	self assert: 2 equals: (VersionsBrowser versionCountForSelector: #iv6 class: sourceClass).
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/14/2022 00:30:06'!
-test22ParenthesisShouldBeUsedOnDoubleAssignation
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:05:48'!
+test28ParenthesisShouldBeUsedOnDoubleAssignation
 
 	| refactoring sourceClass targetClass |
 	
@@ -763,8 +763,8 @@ iv6 := tmp1 := 1.'.
 iv2 iv6: (tmp1 := 1).' equals: (sourceClass compiledMethodAt: #iv6) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/14/2022 00:34:13'!
-test23ParenthesisShouldBeUsedOnDoubleAssignation
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:05:40'!
+test29ParenthesisShouldBeUsedOnDoubleAssignation
 
 	| refactoring sourceClass targetClass |
 	
@@ -782,8 +782,8 @@ iv6 := iv6 := 1.'.
 iv2 iv6: (iv2 iv6: 1).' equals: (sourceClass compiledMethodAt: #iv6) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/26/2022 20:55:31'!
-test23_01ParenthesisShouldBeUsedOnDoubleAssignation
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:05:35'!
+test30ParenthesisShouldBeUsedOnDoubleAssignation
 
 	| refactoring sourceClass targetClass |
 	
@@ -807,8 +807,8 @@ test23_01ParenthesisShouldBeUsedOnDoubleAssignation
 	^tmp.' equals: (sourceClass compiledMethodAt: #iv6) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/21/2022 02:29:44'!
-test23_validation_getterMessageShouldntExistsOnTarget
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:05:26'!
+test31_validation_getterMessageShouldntExistsOnTarget
 
 	| sourceClass targetClass |
 	
@@ -828,8 +828,8 @@ test23_validation_getterMessageShouldntExistsOnTarget
 
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/21/2022 02:29:13'!
-test24_validation_getterMessageShouldntExistsOnTarget
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:05:18'!
+test32_validation_getterMessageShouldntExistsOnTarget
 
 	| sourceClass targetClass |
 	
@@ -849,8 +849,8 @@ test24_validation_getterMessageShouldntExistsOnTarget
 
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/22/2022 17:43:22'!
-test24_validation_getterMessageShouldntExistsOnTargetSuperclass
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:05:13'!
+test33_validation_getterMessageShouldntExistsOnTargetSuperclass
 
 	| sourceClass targetClass targetSuperClass |
 	
@@ -871,8 +871,8 @@ test24_validation_getterMessageShouldntExistsOnTargetSuperclass
 
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/22/2022 19:24:26'!
-test25_validation_instanceVariableShouldntExistsOnTarget
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:05:02'!
+test34_validation_instanceVariableShouldntExistsOnTarget
 
 	| sourceClass targetClass |
 	
@@ -888,8 +888,8 @@ test25_validation_instanceVariableShouldntExistsOnTarget
 
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/22/2022 19:24:26'!
-test26_validation_instanceVariableShouldntExistsOnTargetSubclass
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:04:52'!
+test35_validation_instanceVariableShouldntExistsOnTargetSubclass
 
 	| sourceClass targetClass |
 	
@@ -906,8 +906,8 @@ test26_validation_instanceVariableShouldntExistsOnTargetSubclass
 
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/22/2022 19:18:47'!
-test27_validation_setterMessageShouldntExistsOnTarget
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:04:45'!
+test36_validation_setterMessageShouldntExistsOnTarget
 
 	| sourceClass targetClass |
 	
@@ -927,8 +927,8 @@ test27_validation_setterMessageShouldntExistsOnTarget
 
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/22/2022 22:16:10'!
-test28_validation_instanceVariableToMoveShouldExistsOnSource
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:04:39'!
+test37_validation_instanceVariableToMoveShouldExistsOnSource
 
 	| sourceClass targetClass |
 	
@@ -944,8 +944,8 @@ test28_validation_instanceVariableToMoveShouldExistsOnSource
 
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/22/2022 22:21:48'!
-test29_validation_instanceVariableToAccessThroughShouldExistsOnSource
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:04:32'!
+test38_validation_instanceVariableToAccessThroughShouldExistsOnSource
 
 	| sourceClass targetClass |
 	
