@@ -1,6 +1,6 @@
-'From Cuis 6.0 [latest update: #5655] on 30 January 2023 at 10:50:56 pm'!
+'From Cuis 6.0 [latest update: #5655] on 8 February 2023 at 1:29:51 am'!
 'Description '!
-!provides: 'MoveInstanceVariableRefactoring' 1 8!
+!provides: 'MoveInstanceVariableRefactoring' 1 13!
 SystemOrganization addCategory: 'MoveInstanceVariableRefactoring'!
 
 
@@ -44,14 +44,14 @@ RefactoringTest subclass: #MoveInstanceVariableTest
 MoveInstanceVariableTest class
 	instanceVariableNames: ''!
 
-!classDefinition: #MoveMoveInstanceVariableApplier category: 'MoveInstanceVariableRefactoring'!
-TransferInstanceVariableApplier subclass: #MoveMoveInstanceVariableApplier
+!classDefinition: #MoveInstanceVariableApplier category: 'MoveInstanceVariableRefactoring'!
+TransferInstanceVariableApplier subclass: #MoveInstanceVariableApplier
 	instanceVariableNames: 'accessingThroughinstanceVariableName targetClass'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'MoveInstanceVariableRefactoring'!
-!classDefinition: 'MoveMoveInstanceVariableApplier class' category: 'MoveInstanceVariableRefactoring'!
-MoveMoveInstanceVariableApplier class
+!classDefinition: 'MoveInstanceVariableApplier class' category: 'MoveInstanceVariableRefactoring'!
+MoveInstanceVariableApplier class
 	instanceVariableNames: ''!
 
 !classDefinition: #MoveInstanceVariableRectoring category: 'MoveInstanceVariableRefactoring'!
@@ -64,6 +64,19 @@ Object subclass: #MoveInstanceVariableRectoring
 MoveInstanceVariableRectoring class
 	instanceVariableNames: ''!
 
+!classDefinition: #TesisRefactoringMenu category: 'MoveInstanceVariableRefactoring'!
+Object subclass: #TesisRefactoringMenu
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'MoveInstanceVariableRefactoring'!
+!classDefinition: 'TesisRefactoringMenu class' category: 'MoveInstanceVariableRefactoring'!
+TesisRefactoringMenu class
+	instanceVariableNames: ''!
+
+
+!TesisRefactoringMenu commentStamp: '<historical>' prior: 0!
+Please remove this class after integration!
 
 !CodeForNodeOnMethod methodsFor: 'initialization' stamp: 'mc 1/24/2023 20:13:59'!
 initializeFor: aNode replace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver 
@@ -1040,14 +1053,14 @@ test42_instanceVariableToAccessThroughShouldExistsOnSourceHierarchy
 	self assert: (targetClass instVarNames includes: 'iv1').
 	! !
 
-!MoveMoveInstanceVariableApplier methodsFor: 'initialization' stamp: 'mc 1/22/2023 14:34:12'!
+!MoveInstanceVariableApplier methodsFor: 'initialization' stamp: 'mc 1/22/2023 14:34:12'!
 askTargetClassName
 	| targetClassNameTmp |
 	targetClassNameTmp := ClassNameRequestMorph request: 'Enter target class name:' initialAnswer: '' orCancel: requestExitBlock.
 	targetClassNameTmp := targetClassNameTmp withoutSeparators.
 	targetClass := (Smalltalk at: targetClassNameTmp asSymbol)	! !
 
-!MoveMoveInstanceVariableApplier methodsFor: 'initialization' stamp: 'mc 1/6/2023 00:10:07'!
+!MoveInstanceVariableApplier methodsFor: 'initialization' stamp: 'mc 1/6/2023 00:10:07'!
 createRefactoring
 	^MoveInstanceVariableRectoring 
 		named: instanceVariableName 
@@ -1055,30 +1068,23 @@ createRefactoring
 		to: targetClass
 		accessingThrough: accessingThroughinstanceVariableName.! !
 
-!MoveMoveInstanceVariableApplier methodsFor: 'initialization' stamp: 'mc 1/5/2023 18:23:52'!
+!MoveInstanceVariableApplier methodsFor: 'initialization' stamp: 'mc 1/5/2023 18:23:52'!
 selectVariableLabel
 	^'Select variable to access through'! !
 
-!MoveMoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 1/22/2023 02:00:44'!
+!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 2/3/2023 00:18:03'!
 chooseInstanceVariableToAccessThrough
 	| vars index |
 	"self halt."
 	vars _ classToRefactor allInstVarNames sorted.
 	vars _ vars reject: [ :anInstanceVariable | anInstanceVariable = instanceVariableName ].
-	vars isEmpty ifTrue: [^ self halt ].
+	vars isEmpty ifTrue: [Refactoring refactoringErrorClass signal: 'There is no instance variable to access through' ].
 	
 	index _ (PopUpMenu labelArray: vars lines: #()) startUpWithCaption: self selectVariableLabel.
 	index = 0 ifTrue: [^self endRequest].
-	accessingThroughinstanceVariableName := vars at: index.
-	
-	"
-	classToRefactor 
-		chooseDefiningInstanceVariableAlphabeticallyWith: self selectVariableLabel
-		thenDo: [ :anInstanceVariable | ^accessingThroughinstanceVariableName := anInstanceVariable ].
-	"
-	"self endRequest".! !
+	accessingThroughinstanceVariableName := vars at: index.! !
 
-!MoveMoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 1/22/2023 02:07:44'!
+!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 1/22/2023 02:07:44'!
 chooseInstanceVariableToMove
 	instanceVariableName ifNotNil: [ ^self ].
 	
@@ -1088,15 +1094,26 @@ chooseInstanceVariableToMove
 		
 	self endRequest ! !
 
-!MoveMoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 1/22/2023 14:34:12'!
+!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 2/7/2023 23:44:01'!
 requestRefactoringParameters
 
 	self 
 		chooseInstanceVariableToMove;
+		selectClassWichInstaceVariableIsDefined;
 		chooseInstanceVariableToAccessThrough;
 		askTargetClassName! !
 
-!MoveMoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 1/22/2023 02:08:37'!
+!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 2/8/2023 01:28:49'!
+selectClassWichInstaceVariableIsDefined
+	| classToRefactorWithIVDefined |
+	"whichClassDefinesInstanceVariable: 'iv2' ifNone: []"
+	"self halt."
+	classToRefactorWithIVDefined := classToRefactor whichClassDefinesInstanceVariable: instanceVariableName ifNone: [Refactoring refactoringErrorClass signal: 'Instance variable ', instanceVariableName, ' does not exist in ', targetClass name, ' herarchy'].
+	classToRefactorWithIVDefined = classToRefactor ifFalse: [ 
+		Refactoring refactoringWarning: 'Instance variable is not defined on class ', classToRefactor name.
+		classToRefactor := classToRefactorWithIVDefined ]! !
+
+!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 1/22/2023 02:08:37'!
 selectVariableToMoveLabel
 	^'Choose instance variable to move'! !
 
@@ -1296,6 +1313,44 @@ named: instVarNameSourceClass from: sourceClass to: targetClass accessingThrough
 	(sourceClass allInstVarNames includes: instVarNameTargetClass) ifFalse: [ RefactoringError signal: self instanceVariableToAccessThroughShouldExistOnSourceClassErrorMessage ].
 	^self new initializeNamed: instVarNameSourceClass from: sourceClass to: targetClass in: instVarNameTargetClass .! !
 
+!TesisRefactoringMenu class methodsFor: 'as yet unclassified' stamp: 'mc 2/7/2023 01:42:04'!
+classListMenuOptions
+
+	^ `{	
+			{
+				#submenuOf -> RefactoringMenues refactoringsLabel.
+				#itemGroup 		-> 		20.
+				#itemOrder 		-> 		70.
+				#label 			-> 		'move inst var...'.
+				#selector 		-> 		#contextualMoveInstanceVariable.
+				#icon 			-> 		#saveAsIcon
+			} asDictionary.			
+	}`.
+	! !
+
+!TesisRefactoringMenu class methodsFor: 'as yet unclassified' stamp: 'mc 2/7/2023 01:22:07'!
+smalltalkEditorCmdShortcutsSpec
+	"
+	SmalltalkEditor initializeCmdShortcuts
+	"
+	^#(
+		#($4	#contextualMoveInstanceVariable:						'Move instance variable what is under cursor')
+	)! !
+
+!TesisRefactoringMenu class methodsFor: 'as yet unclassified' stamp: 'mc 2/7/2023 01:13:53'!
+smalltalkEditorMenuOptions
+
+	^`{
+		{
+				#submenuOf -> RefactoringMenues refactoringsLabel.
+				#itemGroup 		-> 		40.
+				#itemOrder 		-> 		40.
+				#label 			-> 		'Move Instance Variable'.
+				#selector 		-> 		#contextualMoveInstanceVariable.
+				#icon 			-> 		#saveAsIcon
+		} asDictionary.
+	}`! !
+
 !SmalltalkEditor methodsFor: '*MoveInstanceVariableRefactoring' stamp: 'mc 1/22/2023 14:57:39'!
 contextualMoveInstanceVariable
 	"self halt."
@@ -1368,247 +1423,13 @@ moveInstanceVariable: aNodeUnderCursor in: aSelectedClass at: aMethodNode
 moveInstanceVariableOn: aBrowser at: aClassToRefactor
 	self moveInstanceVariableOn: aBrowser for: nil at: aClassToRefactor.! !
 
-!SmalltalkEditor methodsFor: '*MoveInstanceVariableRefactoring' stamp: 'mc 1/5/2023 23:18:31'!
+!SmalltalkEditor methodsFor: '*MoveInstanceVariableRefactoring' stamp: 'mc 2/7/2023 23:57:11'!
 moveInstanceVariableOn: aBrowser for: anInstanceVariableName at: aClassToRefactor
 	"self halt."
-	(MoveMoveInstanceVariableApplier on: aBrowser for: anInstanceVariableName at: aClassToRefactor) value! !
+	(MoveInstanceVariableApplier on: aBrowser for: anInstanceVariableName at: aClassToRefactor) value! !
 
-!BrowserWindow methodsFor: '*MoveInstanceVariableRefactoring' stamp: 'mc 1/22/2023 14:58:32'!
+!BrowserWindow methodsFor: '*MoveInstanceVariableRefactoring' stamp: 'mc 2/3/2023 00:08:23'!
 contextualMoveInstanceVariable
 "self halt."
 	model selectedClassOrMetaClass ifNotNil: [ :aClass |
-		(MoveMoveInstanceVariableApplier on: model at: aClass ) value].! !
-
-!RefactoringMenues class methodsFor: '*MoveInstanceVariableRefactoring' stamp: 'mc 1/21/2023 15:50:29'!
-classListMenuOptions
-
-	^ `{
-			{
-				#itemGroup 	-> 		5.
-				#itemOrder 		-> 		10.
-				#label 			-> 	RefactoringMenues refactoringsLabel.
-				#selector 		-> 		#yourself.
-				#icon 			-> 		#listAddIcon
-			} asDictionary.
-			{
-				#submenuOf -> RefactoringMenues refactoringsLabel.
-				#itemGroup 	-> 		10.
-				#itemOrder 		-> 		10.
-				#label 			-> 		'rename class... (R)'.
-				#object 			-> 		#model.
-				#selector 		-> 		#renameClass.
-				#icon 			-> 		#saveAsIcon
-			} asDictionary.
-			{
-				#submenuOf -> RefactoringMenues refactoringsLabel.
-				#itemGroup 	-> 		10.
-				#itemOrder 		-> 		20.
-				#label 			-> 		'insert superclass...'.
-				#object 			-> 		#model.
-				#selector 		-> 		#insertSuperclass.
-				#icon 			-> 		#saveAsIcon
-			} asDictionary.
-			{
-				#submenuOf -> RefactoringMenues refactoringsLabel.
-				#itemGroup 	-> 		10.
-				#itemOrder 		-> 		30.
-				#label 			-> 		'safely remove class (x)'.
-				#object 			-> 		#model.
-				#selector 		-> 		#safelyRemoveClass.
-				#icon 			-> 		#deleteIcon
-			} asDictionary.
-			{
-				#submenuOf -> RefactoringMenues refactoringsLabel.
-				#itemGroup 	-> 		20.
-				#itemOrder 		-> 		10.
-				#label 			-> 		'add inst var...'.
-				#selector 		-> 		#addInstVar.
-				#icon 			-> 		#listAddIcon
-			} asDictionary.
-			{
-				#submenuOf -> RefactoringMenues refactoringsLabel.
-				#itemGroup 	-> 		20.
-				#itemOrder 		-> 		20.
-				#label 			-> 		'rename inst var...'.
-				#selector 		-> 		#renameInstVar.
-				#icon 			-> 		#saveAsIcon
-			} asDictionary.
-			{
-				#submenuOf -> RefactoringMenues refactoringsLabel.
-				#itemGroup 	-> 		20.
-				#itemOrder 		-> 		30.
-				#label 			-> 		'remove inst var...'.
-				#selector 		-> 		#removeInstVar.
-				#icon 			-> 		#deleteIcon
-			} asDictionary.
-			{
-				#submenuOf -> RefactoringMenues refactoringsLabel.
-				#itemGroup 	-> 			20.
-				#itemOrder 		-> 		40.
-				#label 			-> 		'remove all unreferenced inst var...'.
-				#selector 		-> 		#removeAllUnreferencedInstVar.
-				#icon 			-> 		#deleteIcon
-			} asDictionary.
-			{
-				#submenuOf -> RefactoringMenues refactoringsLabel.
-				#itemGroup 		-> 		20.
-				#itemOrder 		-> 		50.
-				#label 			-> 		'push up inst var...'.
-				#selector 		-> 		#pushUpInstanceVariable.
-				#icon 			-> 		#goTopIcon
-			} asDictionary.
-			{
-				#submenuOf -> RefactoringMenues refactoringsLabel.
-				#itemGroup 		-> 		20.
-				#itemOrder 		-> 		60.
-				#label 			-> 		'push down inst var...'.
-				#selector 		-> 		#pushDownInstanceVariable.
-				#icon 			-> 		#goBottomIcon
-			} asDictionary.				
-			{
-				#submenuOf -> RefactoringMenues refactoringsLabel.
-				#itemGroup 		-> 		20.
-				#itemOrder 		-> 		70.
-				#label 			-> 		'move inst var...'.
-				#selector 		-> 		#contextualMoveInstanceVariable.
-				#icon 			-> 		#saveAsIcon
-			} asDictionary.				
-			{
-				#submenuOf -> RefactoringMenues refactoringsLabel.
-				#itemGroup 	-> 			30.
-				#itemOrder 		-> 		10.
-				#label 			-> 		'rename global...'.
-				#object 			-> 		#model.
-				#selector 		-> 		#renameGlobal.
-				#icon 			-> 		#saveAsIcon
-			} asDictionary.
-	}`.
-	! !
-
-!RefactoringMenues class methodsFor: '*MoveInstanceVariableRefactoring' stamp: 'mc 1/4/2023 23:13:20'!
-smalltalkEditorCmdShortcutsSpec
-	"self halt."
-	"
-	SmalltalkEditor initializeCmdShortcuts
-	"
-	^#(
-		#($R	#contextualRename:					'Renames what is under cursor')
-		#($A	#contextualAddParameter:			'Adds parameter to message that is under cursor')
-		#($S	#contextualRemoveParameter:		'Removes parameter to message that is under cursor')
-		#($O	#temporaryToInstanceVariable:		'Extracts temporary variable to instance variable')
-		#($J	#extractToTemporary:					'Extracts the selected code into a temporary variable')
-		#($K	#extractMethod:						'Extracts the selected code into a separate method')
-		#($1 #contextualExtractAsParameter: 'Extracts the selected code as parameter')
-		#($2	#inlineTemporaryVariable:						'Inlines the selected temporary variable into each usage')
-		#($3	#contextualInlineMethod:						'Inlines the selected message send into desired colaborations')
-		#($4	#contextualMoveInstanceVariable:						'Move instance variable what is under cursor')
-	)! !
-
-!RefactoringMenues class methodsFor: '*MoveInstanceVariableRefactoring' stamp: 'mc 1/21/2023 15:36:56'!
-smalltalkEditorMenuOptions
-
-	^`{
-		{
-				#itemGroup 		-> 		35.
-				#itemOrder 		-> 		10.
-				#label 			-> 	RefactoringMenues refactoringsLabel.
-				#selector 		-> 		#yourself.
-				#icon 			-> 		#listAddIcon
-		} asDictionary.
-		{
-				#submenuOf -> RefactoringMenues refactoringsLabel.
-				#itemGroup 		-> 		10.
-				#itemOrder 		-> 		10.
-				#label 			-> 		'Rename... (R)'.
-				#selector 		-> 		#contextualRename.
-				#icon 			-> 		#saveAsIcon
-		} asDictionary.
-		{
-				#submenuOf -> RefactoringMenues refactoringsLabel.
-				#itemGroup 		-> 		10.
-				#itemOrder 		-> 		20.
-				#label 			-> 		'Extract as Parameter... (1)'.
-				#selector 		-> 		#contextualExtractAsParameter.
-				#icon 			-> 		#listAddIcon
-		} asDictionary.
-		{
-				#submenuOf -> RefactoringMenues refactoringsLabel.
-				#itemGroup 		-> 		10.
-				#itemOrder 		-> 		30.
-				#label 			-> 		'Add Parameter... (A)'.
-				#selector 		-> 		#contextualAddParameter.
-				#icon 			-> 		#listAddIcon
-		} asDictionary.
-		{
-				#submenuOf -> RefactoringMenues refactoringsLabel.
-				#itemGroup 		-> 		10.
-				#itemOrder 		-> 		40.
-				#label 			-> 		'Remove Parameter... (S)'.
-				#selector 		-> 		#contextualRemoveParameter.
-				#icon 			-> 		#listRemoveIcon
-		} asDictionary.
-		{
-				#submenuOf -> RefactoringMenues refactoringsLabel.
-				#itemGroup 		-> 		20.
-				#itemOrder 		-> 		10.
-				#label 			-> 		'Extract Temporary... (J)'.
-				#selector 		-> 		#extractToTemporary.
-				#icon 			-> 		#saveAsIcon
-		} asDictionary.
-		{
-				#submenuOf -> RefactoringMenues refactoringsLabel.
-				#itemGroup 		-> 		20.
-				#itemOrder 		-> 		20.
-				#label 			-> 		'Extract Method... (K)'.
-				#selector 		-> 		#extractMethod.
-				#icon 			-> 		#saveAsIcon
-		} asDictionary.
-		{
-				#submenuOf -> RefactoringMenues refactoringsLabel.
-				#itemGroup 		-> 		30.
-				#itemOrder 		-> 		10.
-				#label 			-> 		'Inline Temporary... (2)'.
-				#selector 		-> 		#inlineTemporaryVariable.
-				#icon 			-> 		#saveAsIcon
-		} asDictionary.
-		{
-				#submenuOf -> RefactoringMenues refactoringsLabel.
-				#itemGroup 		-> 		30.
-				#itemOrder 		-> 		20.
-				#label 			-> 		'Inline Method... (3)'.
-				#selector 		-> 		#contextualInlineMethod.
-				#icon 			-> 		#saveAsIcon
-		} asDictionary.		
-		{
-				#submenuOf -> RefactoringMenues refactoringsLabel.
-				#itemGroup 		-> 		40.
-				#itemOrder 		-> 		10.
-				#label 			-> 		'Temporary to Instance Variable (O)'.
-				#selector 		-> 		#temporaryToInstanceVariable.
-				#icon 			-> 		#saveAsIcon
-		} asDictionary.
-		{
-				#submenuOf -> RefactoringMenues refactoringsLabel.
-				#itemGroup 		-> 		40.
-				#itemOrder 		-> 		20.
-				#label 			-> 		'Push Up Instance Variable'.
-				#selector 		-> 		#contextualPushUpInClassDefinition.
-				#icon 			-> 		#goTopIcon
-		} asDictionary.
-		{
-				#submenuOf -> RefactoringMenues refactoringsLabel.
-				#itemGroup 		-> 		40.
-				#itemOrder 		-> 		30.
-				#label 			-> 		'Push Down Instance Variable'.
-				#selector 		-> 		#contextualPushDownInClassDefinition.
-				#icon 			-> 		#goBottomIcon
-		} asDictionary.
-		{
-				#submenuOf -> RefactoringMenues refactoringsLabel.
-				#itemGroup 		-> 		40.
-				#itemOrder 		-> 		40.
-				#label 			-> 		'Move Instance Variable'.
-				#selector 		-> 		#contextualMoveInstanceVariable.
-				#icon 			-> 		#saveAsIcon
-		} asDictionary.
-	}`! !
+		(MoveInstanceVariableApplier on: model at: aClass ) value].! !
