@@ -1,12 +1,12 @@
-'From Cuis 6.0 [latest update: #5655] on 20 February 2023 at 6:52:30 pm'!
+'From Cuis 6.0 [latest update: #5655] on 22 February 2023 at 2:43:17 am'!
 'Description '!
-!provides: 'MoveInstanceVariableRefactoring' 1 18!
+!provides: 'MoveInstanceVariableRefactoring' 1 24!
 SystemOrganization addCategory: 'MoveInstanceVariableRefactoring'!
 
 
 !classDefinition: #CodeForNodeOnMethod category: 'MoveInstanceVariableRefactoring'!
 ParseNodeVisitor subclass: #CodeForNodeOnMethod
-	instanceVariableNames: 'instanceVariableName compiledMethod rangesToKeywords methodNode instVarNameTargetClass node rangesForNode newCodeForNode offsetNodeCodeReplacer intervalsToReject'
+	instanceVariableNames: 'node instanceVariableName compiledMethod intervalsToModify methodNode instVarNameTargetClass nodeInterval newCodeForNode nodeOffsetInSourceCode intervalsToReject'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'MoveInstanceVariableRefactoring'!
@@ -85,105 +85,144 @@ TesisRefactoringMenu class
 	instanceVariableNames: ''!
 
 
+!CodeForNodeOnMethod commentStamp: '<historical>' prior: 0!
+this class returns the code that belongs to "node" with "instanceVariableName" moved!
+
 !TesisRefactoringMenu commentStamp: '<historical>' prior: 0!
 Please remove this class after integration!
 
-!CodeForNodeOnMethod methodsFor: 'initialization' stamp: 'mc 2/15/2023 23:50:21'!
+!CodeForNodeOnMethod methodsFor: 'initialization' stamp: 'mc 2/22/2023 02:11:00'!
 initializeFor: aNode replace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver rejectingIntervals: intervals
 	node := aNode.
 	instanceVariableName := instVarNameToReplace.
 	compiledMethod := aCompiledMethod.
 	instVarNameTargetClass := instVarNameToUseAsReceiver.
 	methodNode := compiledMethod methodNode.
-	rangesToKeywords := OrderedCollection new.
+	intervalsToModify := OrderedCollection new.
 	intervalsToReject := intervals ! !
 
-!CodeForNodeOnMethod methodsFor: 'visiting' stamp: 'mc 2/20/2023 18:45:28'!
+!CodeForNodeOnMethod methodsFor: 'visiting' stamp: 'mc 2/22/2023 02:11:00'!
 visitAssignmentNode: anAssignmentNode 
-| rangesOfassigmentNode assigmentValue newAssignmentCode completeRangesOfassigmentNode newCodeForValue nodeReplacer |
+| rangesOfassigmentNode assigmentValue newAssignmentCode newCodeForValue nodeReplacer |
 
 	anAssignmentNode variable name = instanceVariableName ifFalse: [anAssignmentNode value accept: self. ^self].
 	
-	completeRangesOfassigmentNode := self sourceRangesOf: anAssignmentNode.
-	self removeSeenRanges: completeRangesOfassigmentNode.
-	rangesOfassigmentNode := self filterRangesThatDoNotBelongToTheCurrentNode: completeRangesOfassigmentNode.
-	nodeReplacer := CodeForNodeOnMethod for: anAssignmentNode value replace: instanceVariableName onMethod: compiledMethod accessingThrough: instVarNameTargetClass rejectingIntervals: (rangesToKeywords collect: [ :anAssociation | anAssociation key]), intervalsToReject .
+	rangesOfassigmentNode := self firstUnseenIntervalFor: anAssignmentNode.
+	nodeReplacer := CodeForNodeOnMethod 
+					replace: instanceVariableName 
+					onMethod: compiledMethod 
+					accessingThrough: instVarNameTargetClass 
+					for: anAssignmentNode value 
+					rejectingIntervals: intervalsToReject.
 	newCodeForValue := nodeReplacer execute.
 	(((anAssignmentNode value isMessageNode and: [anAssignmentNode value isKeywordMessageSend])) or: [anAssignmentNode value isAssignmentNode ])
 		ifTrue: [assigmentValue := '(', newCodeForValue, ')'.] 
 		ifFalse: [assigmentValue := newCodeForValue.].
 	newAssignmentCode := instVarNameTargetClass, ' ', instanceVariableName, ': ', assigmentValue.
-	"self halt."
-	rangesToKeywords add: rangesOfassigmentNode -> newAssignmentCode.! !
+	intervalsToReject add: rangesOfassigmentNode.
+	intervalsToModify add: rangesOfassigmentNode -> newAssignmentCode.! !
 
-!CodeForNodeOnMethod methodsFor: 'visiting' stamp: 'mc 2/20/2023 18:48:58'!
+!CodeForNodeOnMethod methodsFor: 'visiting' stamp: 'mc 2/22/2023 02:11:00'!
 visitInstanceVariableNode: anInstanceVariableNode 
-	| completeRangesOfassigmentNode newReadWithGetterCode rangesOfInstVarNameSourceClass |
-	"self halt."
+	| newReadWithGetterCode rangesOfInstVarNameSourceClass |
 	
 	anInstanceVariableNode name = instanceVariableName ifFalse: [^self].
-	completeRangesOfassigmentNode := self sourceRangesOf: anInstanceVariableNode.
-	self removeSeenRanges: completeRangesOfassigmentNode.
-	rangesOfInstVarNameSourceClass := self filterRangesThatDoNotBelongToTheCurrentNode: completeRangesOfassigmentNode.
+	rangesOfInstVarNameSourceClass := self firstUnseenIntervalFor: anInstanceVariableNode.
 	newReadWithGetterCode := instVarNameTargetClass, ' ', instanceVariableName.
-	"self halt."
-	rangesToKeywords add: rangesOfInstVarNameSourceClass -> newReadWithGetterCode.! !
+	intervalsToReject add: rangesOfInstVarNameSourceClass.
+	intervalsToModify add: rangesOfInstVarNameSourceClass -> newReadWithGetterCode.! !
 
-!CodeForNodeOnMethod methodsFor: 'accessing' stamp: 'mc 2/20/2023 18:46:40'!
+!CodeForNodeOnMethod methodsFor: 'accessing' stamp: 'mc 2/22/2023 02:17:48'!
 execute
 	
-	| originalCode |
-	node isMethodNode 
-		ifTrue:[ rangesForNode := 1 to: (compiledMethod sourceCode size) ]
-		ifFalse:[ rangesForNode := ((methodNode completeSourceRangesOf: node ifAbsent: []) removeAllSuchThat: [:anInterval | intervalsToReject anySatisfy: [ :intervalToReject | intervalToReject includesAllOf: anInterval ]]) detectMin: [ :anInterval | anInterval first] ].
-	offsetNodeCodeReplacer := rangesForNode first -1.
-	originalCode := compiledMethod sourceCode.
-	newCodeForNode := originalCode copyFrom: rangesForNode first to: rangesForNode last.
-	node accept: self.
-	rangesToKeywords := rangesToKeywords collect: [ :anInterval | (anInterval key - offsetNodeCodeReplacer) -> anInterval value ].
-	^newCodeForNode copyReplacing: rangesToKeywords.
+	self initializeNodeInterval.
+	self initializeOffset.
+	self getIntervalsToModify.
+	^self getNewModifiedCode.
+	
 ! !
 
-!CodeForNodeOnMethod methodsFor: 'as yet unclassified' stamp: 'mc 2/20/2023 18:44:25'!
-filterRangesThatDoNotBelongToTheCurrentNode: aCollectionOfRanges
+!CodeForNodeOnMethod methodsFor: 'accessing' stamp: 'mc 2/22/2023 02:18:37'!
+getIntervalsToModify
 
-	^ (aCollectionOfRanges select: [ :anInterval | rangesForNode includesAllOf: anInterval ]) detectMin: [ :anInterval | anInterval first]! !
+	node accept: self.
+	intervalsToModify := intervalsToModify collect: [ :anAssociation | (anAssociation key - nodeOffsetInSourceCode) -> anAssociation value ]! !
 
-!CodeForNodeOnMethod methodsFor: 'as yet unclassified' stamp: 'mc 2/20/2023 18:45:00'!
+!CodeForNodeOnMethod methodsFor: 'accessing' stamp: 'mc 2/22/2023 02:15:23'!
+getNewModifiedCode
+
+	newCodeForNode := compiledMethod sourceCode copyFrom: nodeInterval first to: nodeInterval last.
+	^newCodeForNode copyReplacing: intervalsToModify.! !
+
+!CodeForNodeOnMethod methodsFor: 'accessing' stamp: 'mc 2/22/2023 01:47:45'!
+initializeNodeInterval
+
+	| posibleRangesForNode |
+	node isMethodNode 
+		ifTrue:[ nodeInterval := 1 to: (compiledMethod sourceCode size) ]
+		ifFalse:[ 
+			posibleRangesForNode _ self sourceRangesOf: node.
+			self removeSeenRanges: posibleRangesForNode.
+			nodeInterval _ self firstIntervalOn: posibleRangesForNode.
+			]! !
+
+!CodeForNodeOnMethod methodsFor: 'accessing' stamp: 'mc 2/22/2023 02:18:37'!
+initializeOffset
+
+	^ nodeOffsetInSourceCode := nodeInterval first -1! !
+
+!CodeForNodeOnMethod methodsFor: 'as yet unclassified' stamp: 'mc 2/22/2023 01:46:32'!
+filterRangesThatDoNotBelongToTheCurrentNodeIn: aCollectionOfRanges
+
+	^ self firstIntervalOn: (aCollectionOfRanges select: [ :anInterval | nodeInterval includesAllOf: anInterval ])! !
+
+!CodeForNodeOnMethod methodsFor: 'as yet unclassified' stamp: 'mc 2/22/2023 00:38:31'!
+firstIntervalOn: aCollectionOfIntervals
+	^aCollectionOfIntervals detectMin: [ :anInterval | anInterval first]! !
+
+!CodeForNodeOnMethod methodsFor: 'as yet unclassified' stamp: 'mc 2/22/2023 02:35:21'!
+firstUnseenIntervalFor: aNode
+	| completeRangesOfassigmentNode |
+	completeRangesOfassigmentNode := self sourceRangesOf: aNode.
+	self removeSeenRanges: completeRangesOfassigmentNode.
+	"self halt."
+	^self filterRangesThatDoNotBelongToTheCurrentNodeIn: completeRangesOfassigmentNode.! !
+
+!CodeForNodeOnMethod methodsFor: 'as yet unclassified' stamp: 'mc 2/21/2023 23:35:33'!
 removeSeenRanges: rangesOfNode
 
-	^ rangesOfNode removeAllSuchThat: [ :aSourceInterval | (rangesToKeywords collect: [ :anAssociation | anAssociation key]) anySatisfy: [ :aSourceIntervalToModify | aSourceIntervalToModify includesAllOf: aSourceInterval ] ]! !
+	^ rangesOfNode removeAllSuchThat: [ :aSourceInterval | intervalsToReject anySatisfy: [ :aSourceIntervalToModify | aSourceIntervalToModify includesAllOf: aSourceInterval ] ]! !
 
 !CodeForNodeOnMethod methodsFor: 'as yet unclassified' stamp: 'mc 2/20/2023 18:45:10'!
 sourceRangesOf: aNode
 	
 	^methodNode completeSourceRangesOf: aNode ifAbsent: []! !
 
-!CodeForNodeOnMethod class methodsFor: 'instance creation' stamp: 'mc 2/15/2023 23:47:10'!
-for: aNode replace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver 
+!CodeForNodeOnMethod class methodsFor: 'instance creation' stamp: 'mc 2/21/2023 19:32:21'!
+replace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver 
 	^self 
-		for: aNode 
+		replace: instVarNameToReplace 
+		onMethod: aCompiledMethod 
+		accessingThrough: instVarNameToUseAsReceiver
+		for: aCompiledMethod methodNode! !
+
+!CodeForNodeOnMethod class methodsFor: 'instance creation' stamp: 'mc 2/21/2023 19:34:57'!
+replace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver for: aNode
+	^self 
 		replace: instVarNameToReplace 
 		onMethod: aCompiledMethod 
 		accessingThrough: instVarNameToUseAsReceiver 
+		for: aNode
 		rejectingIntervals: OrderedCollection new! !
 
-!CodeForNodeOnMethod class methodsFor: 'instance creation' stamp: 'mc 2/15/2023 23:48:28'!
-for: aNode replace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver rejectingIntervals: intervals
+!CodeForNodeOnMethod class methodsFor: 'instance creation' stamp: 'mc 2/21/2023 19:34:33'!
+replace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver for: aNode rejectingIntervals: intervals
 	^self new 
 		initializeFor: aNode 
 		replace: instVarNameToReplace 
 		onMethod: aCompiledMethod 
 		accessingThrough: instVarNameToUseAsReceiver 
 		rejectingIntervals: intervals! !
-
-!CodeForNodeOnMethod class methodsFor: 'instance creation' stamp: 'mc 2/15/2023 23:48:01'!
-replace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver 
-	^self 
-		for: aCompiledMethod methodNode 
-		replace: instVarNameToReplace 
-		onMethod: aCompiledMethod 
-		accessingThrough: instVarNameToUseAsReceiver ! !
 
 !InstanceVariableMixedReplacerVisitor methodsFor: 'initialization' stamp: 'mc 1/24/2023 20:20:16'!
 initializeReplace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver 
@@ -199,10 +238,10 @@ execute
 	methodNode accept: self.
 	^rangesToKeywords.! !
 
-!InstanceVariableMixedReplacerVisitor methodsFor: 'visiting' stamp: 'mc 12/27/2022 14:16:21'!
+!InstanceVariableMixedReplacerVisitor methodsFor: 'visiting' stamp: 'mc 2/21/2023 19:32:33'!
 codeForValue: aNode 
 	| nodeReplacer |
-	nodeReplacer := CodeForNodeOnMethod for: aNode value replace: instanceVariableName onMethod: compiledMethod accessingThrough: instVarNameTargetClass.
+	nodeReplacer := CodeForNodeOnMethod value replace: instanceVariableName onMethod: compiledMethod accessingThrough: instVarNameTargetClass for: aNode.
 	^nodeReplacer execute.
 	! !
 
@@ -1223,12 +1262,13 @@ test42_instanceVariableToAccessThroughShouldExistsOnSourceHierarchy
 	self assert: (targetClass instVarNames includes: 'iv1').
 	! !
 
-!MoveInstanceVariableApplier methodsFor: 'initialization' stamp: 'mc 1/22/2023 14:34:12'!
+!MoveInstanceVariableApplier methodsFor: 'initialization' stamp: 'mc 2/21/2023 03:13:04'!
 askTargetClassName
 	| targetClassNameTmp |
 	targetClassNameTmp := ClassNameRequestMorph request: 'Enter target class name:' initialAnswer: '' orCancel: requestExitBlock.
+	"self halt."
 	targetClassNameTmp := targetClassNameTmp withoutSeparators.
-	targetClass := (Smalltalk at: targetClassNameTmp asSymbol)	! !
+	targetClass := Smalltalk at: targetClassNameTmp asSymbol ifAbsent: [Refactoring refactoringErrorClass signal: 'Cant find the target class'].! !
 
 !MoveInstanceVariableApplier methodsFor: 'initialization' stamp: 'mc 1/6/2023 00:10:07'!
 createRefactoring
@@ -1293,12 +1333,12 @@ initializeNamed: anInstVarNameSourceClass from: aSourceClass to: aTargetClass in
 	targetClass := aTargetClass.
 	instVarNameTargetClass := anInstVarNameTargetClass.! !
 
-!MoveInstanceVariableRectoring methodsFor: 'applying' stamp: 'mc 11/6/2022 00:32:15'!
+!MoveInstanceVariableRectoring methodsFor: 'applying' stamp: 'mc 2/22/2023 02:33:56'!
 apply
-	targetClass addInstVarName: instVarNameSourceClass.
 	self replaceReadAccess.
 	self replaceWriteAccess.
 	self replaceMixedAccess.
+	targetClass addInstVarName: instVarNameSourceClass.
 	sourceClass removeInstVarName: instVarNameSourceClass.! !
 
 !MoveInstanceVariableRectoring methodsFor: 'private-writing' stamp: 'mc 10/12/2022 00:28:04'!
