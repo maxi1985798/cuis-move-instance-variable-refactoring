@@ -1,6 +1,6 @@
-'From Cuis 6.0 [latest update: #5655] on 22 February 2023 at 2:43:17 am'!
+'From Cuis 6.0 [latest update: #5655] on 23 February 2023 at 1:47:02 am'!
 'Description '!
-!provides: 'MoveInstanceVariableRefactoring' 1 24!
+!provides: 'MoveInstanceVariableRefactoring' 1 25!
 SystemOrganization addCategory: 'MoveInstanceVariableRefactoring'!
 
 
@@ -14,16 +14,6 @@ ParseNodeVisitor subclass: #CodeForNodeOnMethod
 CodeForNodeOnMethod class
 	instanceVariableNames: ''!
 
-!classDefinition: #InstanceVariableMixedReplacerVisitor category: 'MoveInstanceVariableRefactoring'!
-ParseNodeVisitor subclass: #InstanceVariableMixedReplacerVisitor
-	instanceVariableNames: 'instanceVariableName compiledMethod rangesToKeywords methodNode instVarNameTargetClass'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'MoveInstanceVariableRefactoring'!
-!classDefinition: 'InstanceVariableMixedReplacerVisitor class' category: 'MoveInstanceVariableRefactoring'!
-InstanceVariableMixedReplacerVisitor class
-	instanceVariableNames: ''!
-
 !classDefinition: #InstanceVariableReaderFinderVisitor category: 'MoveInstanceVariableRefactoring'!
 ParseNodeVisitor subclass: #InstanceVariableReaderFinderVisitor
 	instanceVariableNames: 'result instanceVariableName'
@@ -32,16 +22,6 @@ ParseNodeVisitor subclass: #InstanceVariableReaderFinderVisitor
 	category: 'MoveInstanceVariableRefactoring'!
 !classDefinition: 'InstanceVariableReaderFinderVisitor class' category: 'MoveInstanceVariableRefactoring'!
 InstanceVariableReaderFinderVisitor class
-	instanceVariableNames: ''!
-
-!classDefinition: #InstanceVariableReplacerVisitor category: 'MoveInstanceVariableRefactoring'!
-ParseNodeVisitor subclass: #InstanceVariableReplacerVisitor
-	instanceVariableNames: 'variable compiledMethod rangesToKeywords methodNode variableToAccessThrough node newAssignCode offsetNodeCodeReplacer'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'MoveInstanceVariableRefactoring'!
-!classDefinition: 'InstanceVariableReplacerVisitor class' category: 'MoveInstanceVariableRefactoring'!
-InstanceVariableReplacerVisitor class
 	instanceVariableNames: ''!
 
 !classDefinition: #MoveInstanceVariableTest category: 'MoveInstanceVariableRefactoring'!
@@ -142,19 +122,36 @@ execute
 	
 ! !
 
-!CodeForNodeOnMethod methodsFor: 'accessing' stamp: 'mc 2/22/2023 02:18:37'!
+!CodeForNodeOnMethod methodsFor: 'private' stamp: 'mc 2/22/2023 01:46:32'!
+filterRangesThatDoNotBelongToTheCurrentNodeIn: aCollectionOfRanges
+
+	^ self firstIntervalOn: (aCollectionOfRanges select: [ :anInterval | nodeInterval includesAllOf: anInterval ])! !
+
+!CodeForNodeOnMethod methodsFor: 'private' stamp: 'mc 2/22/2023 00:38:31'!
+firstIntervalOn: aCollectionOfIntervals
+	^aCollectionOfIntervals detectMin: [ :anInterval | anInterval first]! !
+
+!CodeForNodeOnMethod methodsFor: 'private' stamp: 'mc 2/22/2023 02:35:21'!
+firstUnseenIntervalFor: aNode
+	| completeRangesOfassigmentNode |
+	completeRangesOfassigmentNode := self sourceRangesOf: aNode.
+	self removeSeenRanges: completeRangesOfassigmentNode.
+	"self halt."
+	^self filterRangesThatDoNotBelongToTheCurrentNodeIn: completeRangesOfassigmentNode.! !
+
+!CodeForNodeOnMethod methodsFor: 'private' stamp: 'mc 2/22/2023 02:18:37'!
 getIntervalsToModify
 
 	node accept: self.
 	intervalsToModify := intervalsToModify collect: [ :anAssociation | (anAssociation key - nodeOffsetInSourceCode) -> anAssociation value ]! !
 
-!CodeForNodeOnMethod methodsFor: 'accessing' stamp: 'mc 2/22/2023 02:15:23'!
+!CodeForNodeOnMethod methodsFor: 'private' stamp: 'mc 2/22/2023 02:15:23'!
 getNewModifiedCode
 
 	newCodeForNode := compiledMethod sourceCode copyFrom: nodeInterval first to: nodeInterval last.
 	^newCodeForNode copyReplacing: intervalsToModify.! !
 
-!CodeForNodeOnMethod methodsFor: 'accessing' stamp: 'mc 2/22/2023 01:47:45'!
+!CodeForNodeOnMethod methodsFor: 'private' stamp: 'mc 2/22/2023 01:47:45'!
 initializeNodeInterval
 
 	| posibleRangesForNode |
@@ -166,34 +163,17 @@ initializeNodeInterval
 			nodeInterval _ self firstIntervalOn: posibleRangesForNode.
 			]! !
 
-!CodeForNodeOnMethod methodsFor: 'accessing' stamp: 'mc 2/22/2023 02:18:37'!
+!CodeForNodeOnMethod methodsFor: 'private' stamp: 'mc 2/22/2023 02:18:37'!
 initializeOffset
 
 	^ nodeOffsetInSourceCode := nodeInterval first -1! !
 
-!CodeForNodeOnMethod methodsFor: 'as yet unclassified' stamp: 'mc 2/22/2023 01:46:32'!
-filterRangesThatDoNotBelongToTheCurrentNodeIn: aCollectionOfRanges
-
-	^ self firstIntervalOn: (aCollectionOfRanges select: [ :anInterval | nodeInterval includesAllOf: anInterval ])! !
-
-!CodeForNodeOnMethod methodsFor: 'as yet unclassified' stamp: 'mc 2/22/2023 00:38:31'!
-firstIntervalOn: aCollectionOfIntervals
-	^aCollectionOfIntervals detectMin: [ :anInterval | anInterval first]! !
-
-!CodeForNodeOnMethod methodsFor: 'as yet unclassified' stamp: 'mc 2/22/2023 02:35:21'!
-firstUnseenIntervalFor: aNode
-	| completeRangesOfassigmentNode |
-	completeRangesOfassigmentNode := self sourceRangesOf: aNode.
-	self removeSeenRanges: completeRangesOfassigmentNode.
-	"self halt."
-	^self filterRangesThatDoNotBelongToTheCurrentNodeIn: completeRangesOfassigmentNode.! !
-
-!CodeForNodeOnMethod methodsFor: 'as yet unclassified' stamp: 'mc 2/21/2023 23:35:33'!
+!CodeForNodeOnMethod methodsFor: 'private' stamp: 'mc 2/21/2023 23:35:33'!
 removeSeenRanges: rangesOfNode
 
 	^ rangesOfNode removeAllSuchThat: [ :aSourceInterval | intervalsToReject anySatisfy: [ :aSourceIntervalToModify | aSourceIntervalToModify includesAllOf: aSourceInterval ] ]! !
 
-!CodeForNodeOnMethod methodsFor: 'as yet unclassified' stamp: 'mc 2/20/2023 18:45:10'!
+!CodeForNodeOnMethod methodsFor: 'private' stamp: 'mc 2/20/2023 18:45:10'!
 sourceRangesOf: aNode
 	
 	^methodNode completeSourceRangesOf: aNode ifAbsent: []! !
@@ -224,59 +204,6 @@ replace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVa
 		accessingThrough: instVarNameToUseAsReceiver 
 		rejectingIntervals: intervals! !
 
-!InstanceVariableMixedReplacerVisitor methodsFor: 'initialization' stamp: 'mc 1/24/2023 20:20:16'!
-initializeReplace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver 
-	instanceVariableName := instVarNameToReplace.
-	compiledMethod := aCompiledMethod.
-	instVarNameTargetClass := instVarNameToUseAsReceiver.
-	methodNode := compiledMethod methodNode.
-	rangesToKeywords := OrderedCollection new.! !
-
-!InstanceVariableMixedReplacerVisitor methodsFor: 'accessing' stamp: 'mc 12/15/2022 01:01:36'!
-execute
-	
-	methodNode accept: self.
-	^rangesToKeywords.! !
-
-!InstanceVariableMixedReplacerVisitor methodsFor: 'visiting' stamp: 'mc 2/21/2023 19:32:33'!
-codeForValue: aNode 
-	| nodeReplacer |
-	nodeReplacer := CodeForNodeOnMethod value replace: instanceVariableName onMethod: compiledMethod accessingThrough: instVarNameTargetClass for: aNode.
-	^nodeReplacer execute.
-	! !
-
-!InstanceVariableMixedReplacerVisitor methodsFor: 'visiting' stamp: 'mc 12/26/2022 22:41:22'!
-visitAssignmentNode: anAssignmentNode 
-	"super visitAssignmentNode: anAssignmentNode."
-	| completeRangesOfassigmentNode rangesOfassigmentNode  newAssignmentCode newCodeForValue |
-	
-	anAssignmentNode variable name = instanceVariableName ifFalse: [anAssignmentNode value accept: self. ^self].
-	completeRangesOfassigmentNode := methodNode completeSourceRangesOf: anAssignmentNode ifAbsent: [].
-	completeRangesOfassigmentNode removeAllSuchThat: [ :aSourceInterval | (rangesToKeywords collect: [ :anAssociation | anAssociation key]) anySatisfy: [ :aSourceIntervalToModify | aSourceIntervalToModify includesAllOf: aSourceInterval ] ].
-	rangesOfassigmentNode := completeRangesOfassigmentNode detectMin: [ :anInterval | anInterval first].
-	
-	newCodeForValue := self codeForValue: anAssignmentNode.
-	
-	((anAssignmentNode value isMessageNode and: [anAssignmentNode value isKeywordMessageSend]) or: [anAssignmentNode value isAssignmentNode ])
-		ifTrue: [ newCodeForValue := '(', newCodeForValue, ')'].
-	newAssignmentCode := instVarNameTargetClass, ' ', instanceVariableName, ': ', newCodeForValue.
-	rangesToKeywords add: rangesOfassigmentNode -> newAssignmentCode.
-	! !
-
-!InstanceVariableMixedReplacerVisitor methodsFor: 'visiting' stamp: 'mc 2/9/2023 23:34:28'!
-visitInstanceVariableNode: anInstanceVariableNode 
-	| completeRangesOfassigmentNode newReadWithGetterCode rangesOfInstVarNameSourceClass |
-	anInstanceVariableNode name = instanceVariableName ifFalse: [^self].
-	completeRangesOfassigmentNode := methodNode rangeForNode: anInstanceVariableNode ifAbsent: [].
-	completeRangesOfassigmentNode removeAllSuchThat: [ :aSourceInterval | (rangesToKeywords collect: [ :anAssociation | anAssociation key]) anySatisfy: [ :aSourceIntervalToModify | aSourceIntervalToModify includesAllOf: aSourceInterval ] ].
-	rangesOfInstVarNameSourceClass := completeRangesOfassigmentNode first.
-	newReadWithGetterCode := instVarNameTargetClass, ' ', instanceVariableName.
-	rangesToKeywords add: rangesOfInstVarNameSourceClass -> newReadWithGetterCode.! !
-
-!InstanceVariableMixedReplacerVisitor class methodsFor: 'instance creation' stamp: 'mc 11/29/2022 02:37:35'!
-replace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver
-	^self new initializeReplace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver ! !
-
 !InstanceVariableReaderFinderVisitor methodsFor: 'visiting' stamp: 'mc 11/16/2022 23:05:06'!
 visitAssignmentNode: anAssignmentNode
 	anAssignmentNode value accept: self! !
@@ -297,33 +224,6 @@ initializeFor: anInstanceVariableName
 !InstanceVariableReaderFinderVisitor class methodsFor: 'instance creation' stamp: 'mc 11/16/2022 01:32:02'!
 newFor: anInstanceVariableName
 	^self new initializeFor: anInstanceVariableName ! !
-
-!InstanceVariableReplacerVisitor methodsFor: 'as yet unclassified' stamp: 'mc 2/10/2023 01:43:35'!
-execute
-	| rangesNode originalCode |
-	rangesNode := (methodNode completeSourceRangesOf: node ifAbsent: []) detectMin: [ :anInterval | anInterval first] .
-	offsetNodeCodeReplacer := rangesNode first -1.
-	originalCode := compiledMethod sourceCode.
-	newAssignCode := originalCode copyFrom: rangesNode first to: rangesNode last.
-	node accept: self.
-	^newAssignCode copyReplacing: rangesToKeywords.! !
-
-!InstanceVariableReplacerVisitor methodsFor: 'as yet unclassified' stamp: 'mc 2/10/2023 01:11:26'!
-initializeReplace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver forNode: aNode
-	variable := instVarNameToReplace.
-	compiledMethod := aCompiledMethod.
-	variableToAccessThrough := instVarNameToUseAsReceiver.
-	methodNode := compiledMethod methodNode.
-	node := aNode.
-	rangesToKeywords := OrderedCollection new.! !
-
-!InstanceVariableReplacerVisitor class methodsFor: 'as yet unclassified' stamp: 'mc 2/10/2023 01:10:38'!
-replace: instVarNameToReplace withMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver
-	^self replace: instVarNameToReplace withMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver forNode: aCompiledMethod methodNode ! !
-
-!InstanceVariableReplacerVisitor class methodsFor: 'as yet unclassified' stamp: 'mc 2/10/2023 01:09:22'!
-replace: instVarNameToReplace withMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver forNode: aNode
-	^self new initializeReplace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver forNode: aNode! !
 
 !MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 10/21/2022 17:51:06'!
 codeWithBadIdentation
