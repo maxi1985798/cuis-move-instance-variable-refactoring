@@ -1,6 +1,6 @@
-'From Cuis 6.0 [latest update: #5655] on 25 February 2023 at 4:29:26 pm'!
+'From Cuis 6.0 [latest update: #5655] on 25 February 2023 at 7:50:28 pm'!
 'Description '!
-!provides: 'MoveInstanceVariableRefactoring' 1 27!
+!provides: 'MoveInstanceVariableRefactoring' 1 28!
 SystemOrganization addCategory: 'MoveInstanceVariableRefactoring'!
 
 
@@ -81,9 +81,9 @@ initializeFor: aNode replace: instVarNameToReplace onMethod: aCompiledMethod acc
 	intervalsToModify := OrderedCollection new.
 	intervalsToReject := intervals ! !
 
-!CodeForNodeOnMethod methodsFor: 'visiting' stamp: 'mc 2/25/2023 16:18:13'!
+!CodeForNodeOnMethod methodsFor: 'visiting' stamp: 'mc 2/25/2023 19:35:00'!
 visitAssignmentNode: anAssignmentNode 
-| rangesOfassigmentNode assigmentValue newAssignmentCode newCodeForValue nodeReplacer |
+	| rangesOfassigmentNode assigmentValue newAssignmentCode newCodeForValue nodeReplacer |
 
 	anAssignmentNode variable name = instanceVariableName ifFalse: [anAssignmentNode value accept: self. ^self].
 	
@@ -102,14 +102,14 @@ visitAssignmentNode: anAssignmentNode
 	self registerInterval: rangesOfassigmentNode withModification: newAssignmentCode.
 	! !
 
-!CodeForNodeOnMethod methodsFor: 'visiting' stamp: 'mc 2/25/2023 16:15:41'!
+!CodeForNodeOnMethod methodsFor: 'visiting' stamp: 'mc 2/25/2023 18:17:12'!
 visitInstanceVariableNode: anInstanceVariableNode 
-	| newReadWithGetterCode rangesOfInstVarNameSourceClass |
+	| newReadWithGetterCode intervalForInstanceVariableNode |
 	
 	anInstanceVariableNode name = instanceVariableName ifFalse: [^self].
-	rangesOfInstVarNameSourceClass := self firstUnseenIntervalFor: anInstanceVariableNode.
+	intervalForInstanceVariableNode := self firstUnseenIntervalFor: anInstanceVariableNode.
 	newReadWithGetterCode := instVarNameTargetClass, ' ', instanceVariableName.
-	self registerInterval: rangesOfInstVarNameSourceClass withModification: newReadWithGetterCode.! !
+	self registerInterval: intervalForInstanceVariableNode withModification: newReadWithGetterCode.! !
 
 !CodeForNodeOnMethod methodsFor: 'accessing' stamp: 'mc 2/22/2023 02:17:48'!
 execute
@@ -130,12 +130,13 @@ filterRangesThatDoNotBelongToTheCurrentNodeIn: aCollectionOfRanges
 firstIntervalOn: aCollectionOfIntervals
 	^aCollectionOfIntervals detectMin: [ :anInterval | anInterval first]! !
 
-!CodeForNodeOnMethod methodsFor: 'private' stamp: 'mc 2/22/2023 02:35:21'!
+!CodeForNodeOnMethod methodsFor: 'private' stamp: 'mc 2/25/2023 19:34:35'!
 firstUnseenIntervalFor: aNode
+
 	| completeRangesOfassigmentNode |
+	
 	completeRangesOfassigmentNode := self sourceRangesOf: aNode.
 	self removeSeenRanges: completeRangesOfassigmentNode.
-	"self halt."
 	^self filterRangesThatDoNotBelongToTheCurrentNodeIn: completeRangesOfassigmentNode.! !
 
 !CodeForNodeOnMethod methodsFor: 'private' stamp: 'mc 2/22/2023 02:18:37'!
