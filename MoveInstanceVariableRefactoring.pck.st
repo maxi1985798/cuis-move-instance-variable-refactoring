@@ -1,6 +1,6 @@
-'From Cuis 6.0 [latest update: #5655] on 23 February 2023 at 1:47:02 am'!
+'From Cuis 6.0 [latest update: #5655] on 25 February 2023 at 4:29:26 pm'!
 'Description '!
-!provides: 'MoveInstanceVariableRefactoring' 1 25!
+!provides: 'MoveInstanceVariableRefactoring' 1 27!
 SystemOrganization addCategory: 'MoveInstanceVariableRefactoring'!
 
 
@@ -34,6 +34,16 @@ RefactoringTest subclass: #MoveInstanceVariableTest
 MoveInstanceVariableTest class
 	instanceVariableNames: ''!
 
+!classDefinition: #MoveInstanceVariableRectoring category: 'MoveInstanceVariableRefactoring'!
+Refactoring subclass: #MoveInstanceVariableRectoring
+	instanceVariableNames: 'instVarNameSourceClass sourceClass targetClass instVarNameTargetClass'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'MoveInstanceVariableRefactoring'!
+!classDefinition: 'MoveInstanceVariableRectoring class' category: 'MoveInstanceVariableRefactoring'!
+MoveInstanceVariableRectoring class
+	instanceVariableNames: ''!
+
 !classDefinition: #MoveInstanceVariableApplier category: 'MoveInstanceVariableRefactoring'!
 TransferInstanceVariableApplier subclass: #MoveInstanceVariableApplier
 	instanceVariableNames: 'accessingThroughinstanceVariableName targetClass'
@@ -42,16 +52,6 @@ TransferInstanceVariableApplier subclass: #MoveInstanceVariableApplier
 	category: 'MoveInstanceVariableRefactoring'!
 !classDefinition: 'MoveInstanceVariableApplier class' category: 'MoveInstanceVariableRefactoring'!
 MoveInstanceVariableApplier class
-	instanceVariableNames: ''!
-
-!classDefinition: #MoveInstanceVariableRectoring category: 'MoveInstanceVariableRefactoring'!
-Object subclass: #MoveInstanceVariableRectoring
-	instanceVariableNames: 'instVarNameSourceClass sourceClass targetClass instVarNameTargetClass'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'MoveInstanceVariableRefactoring'!
-!classDefinition: 'MoveInstanceVariableRectoring class' category: 'MoveInstanceVariableRefactoring'!
-MoveInstanceVariableRectoring class
 	instanceVariableNames: ''!
 
 !classDefinition: #TesisRefactoringMenu category: 'MoveInstanceVariableRefactoring'!
@@ -81,7 +81,7 @@ initializeFor: aNode replace: instVarNameToReplace onMethod: aCompiledMethod acc
 	intervalsToModify := OrderedCollection new.
 	intervalsToReject := intervals ! !
 
-!CodeForNodeOnMethod methodsFor: 'visiting' stamp: 'mc 2/22/2023 02:11:00'!
+!CodeForNodeOnMethod methodsFor: 'visiting' stamp: 'mc 2/25/2023 16:18:13'!
 visitAssignmentNode: anAssignmentNode 
 | rangesOfassigmentNode assigmentValue newAssignmentCode newCodeForValue nodeReplacer |
 
@@ -99,18 +99,17 @@ visitAssignmentNode: anAssignmentNode
 		ifTrue: [assigmentValue := '(', newCodeForValue, ')'.] 
 		ifFalse: [assigmentValue := newCodeForValue.].
 	newAssignmentCode := instVarNameTargetClass, ' ', instanceVariableName, ': ', assigmentValue.
-	intervalsToReject add: rangesOfassigmentNode.
-	intervalsToModify add: rangesOfassigmentNode -> newAssignmentCode.! !
+	self registerInterval: rangesOfassigmentNode withModification: newAssignmentCode.
+	! !
 
-!CodeForNodeOnMethod methodsFor: 'visiting' stamp: 'mc 2/22/2023 02:11:00'!
+!CodeForNodeOnMethod methodsFor: 'visiting' stamp: 'mc 2/25/2023 16:15:41'!
 visitInstanceVariableNode: anInstanceVariableNode 
 	| newReadWithGetterCode rangesOfInstVarNameSourceClass |
 	
 	anInstanceVariableNode name = instanceVariableName ifFalse: [^self].
 	rangesOfInstVarNameSourceClass := self firstUnseenIntervalFor: anInstanceVariableNode.
 	newReadWithGetterCode := instVarNameTargetClass, ' ', instanceVariableName.
-	intervalsToReject add: rangesOfInstVarNameSourceClass.
-	intervalsToModify add: rangesOfInstVarNameSourceClass -> newReadWithGetterCode.! !
+	self registerInterval: rangesOfInstVarNameSourceClass withModification: newReadWithGetterCode.! !
 
 !CodeForNodeOnMethod methodsFor: 'accessing' stamp: 'mc 2/22/2023 02:17:48'!
 execute
@@ -167,6 +166,12 @@ initializeNodeInterval
 initializeOffset
 
 	^ nodeOffsetInSourceCode := nodeInterval first -1! !
+
+!CodeForNodeOnMethod methodsFor: 'private' stamp: 'mc 2/25/2023 16:17:24'!
+registerInterval: anIntervalToModify withModification: sourceCodeForInterval
+
+	intervalsToReject add: anIntervalToModify.
+	intervalsToModify add: anIntervalToModify -> sourceCodeForInterval! !
 
 !CodeForNodeOnMethod methodsFor: 'private' stamp: 'mc 2/21/2023 23:35:33'!
 removeSeenRanges: rangesOfNode
@@ -872,7 +877,7 @@ test31CodeRepeatedInClousureShouldBeRefactored
 		]' equals: (sourceClass compiledMethodAt: #accessIv6) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:05:26'!
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 2/25/2023 00:26:08'!
 test31_validation_getterMessageShouldntExistsOnTarget
 
 	| sourceClass targetClass |
@@ -885,10 +890,8 @@ test31_validation_getterMessageShouldntExistsOnTarget
 ^5'.
 	
 	self 
-		should: [MoveInstanceVariableRectoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2']
-		raise: RefactoringError
-		withExceptionDo: [ :error |
-			self assert: MoveInstanceVariableRectoring getterExistsOnTargetClassErrorMessage equals: error messageText ].
+		assertCreation: [MoveInstanceVariableRectoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'] 
+		failsWith: [MoveInstanceVariableRectoring getterExistsOnTargetClassErrorMessage].
 	
 
 	! !
@@ -939,7 +942,7 @@ test32CodeRepeatedInClousureShouldBeRefactored_readVariable
 		]' equals: (sourceClass compiledMethodAt: #accessIv1) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:05:18'!
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 2/25/2023 00:27:15'!
 test32_validation_getterMessageShouldntExistsOnTarget
 
 	| sourceClass targetClass |
@@ -951,11 +954,9 @@ test32_validation_getterMessageShouldntExistsOnTarget
 	targetClass compile: 'iv2
 ^5'.
 	
-	self 
-		should: [MoveInstanceVariableRectoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3']
-		raise: RefactoringError
-		withExceptionDo: [ :error |
-			self assert: MoveInstanceVariableRectoring getterExistsOnTargetClassErrorMessage equals: error messageText ].
+	self
+		assertCreation: [MoveInstanceVariableRectoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'] 
+		failsWith: [MoveInstanceVariableRectoring getterExistsOnTargetClassErrorMessage].
 	
 
 	! !
@@ -983,7 +984,7 @@ test33CodeWithDiferentStructureInClousureShouldBeRefactored
 		]' equals: (sourceClass compiledMethodAt: #accessIv1) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:05:13'!
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 2/25/2023 00:28:10'!
 test33_validation_getterMessageShouldntExistsOnTargetSuperclass
 
 	| sourceClass targetClass targetSuperClass |
@@ -996,16 +997,14 @@ test33_validation_getterMessageShouldntExistsOnTargetSuperclass
 ^5'.	
 	targetClass := self createClassNamed: #TargetClass subclassOf: targetSuperClass.
 
-	self 
-		should: [MoveInstanceVariableRectoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3']
-		raise: RefactoringError
-		withExceptionDo: [ :error |
-			self assert: MoveInstanceVariableRectoring getterExistsOnTargetClassErrorMessage equals: error messageText ].
+	self
+		assertCreation: [MoveInstanceVariableRectoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'] 
+		failsWith: [MoveInstanceVariableRectoring getterExistsOnTargetClassErrorMessage].
 	
 
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:05:02'!
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 2/25/2023 00:29:05'!
 test34_validation_instanceVariableShouldntExistsOnTarget
 
 	| sourceClass targetClass |
@@ -1013,16 +1012,12 @@ test34_validation_instanceVariableShouldntExistsOnTarget
 	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv3'.
 	targetClass := self createClassNamed: #TargetClass instanceVariableNames: 'iv2'.
 	
-	self 
-		should: [MoveInstanceVariableRectoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3']
-		raise: RefactoringError
-		withExceptionDo: [ :error |
-			self assert: MoveInstanceVariableRectoring instanceVariableExistsOnTargetHierarchyErrorMessage equals: error messageText ].
-	
-
+	self
+		assertCreation: [MoveInstanceVariableRectoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'] 
+		failsWith: [MoveInstanceVariableRectoring instanceVariableExistsOnTargetHierarchyErrorMessage].
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:04:52'!
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 2/25/2023 00:31:17'!
 test35_validation_instanceVariableShouldntExistsOnTargetSubclass
 
 	| sourceClass targetClass |
@@ -1031,16 +1026,14 @@ test35_validation_instanceVariableShouldntExistsOnTargetSubclass
 	targetClass := self createClassNamed: #TargetClass.
 	self createClassNamed: #TargetSubClass subclassOf: targetClass instanceVariableNames: 'iv2'.
 	
-	self 
-		should: [MoveInstanceVariableRectoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3']
-		raise: RefactoringError
-		withExceptionDo: [ :error |
-			self assert: MoveInstanceVariableRectoring instanceVariableExistsOnTargetHierarchyErrorMessage equals: error messageText ].
+	self
+		assertCreation: [MoveInstanceVariableRectoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'] 
+		failsWith: [MoveInstanceVariableRectoring instanceVariableExistsOnTargetHierarchyErrorMessage].
 	
 
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:04:45'!
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 2/25/2023 00:32:13'!
 test36_validation_setterMessageShouldntExistsOnTarget
 
 	| sourceClass targetClass |
@@ -1052,16 +1045,14 @@ test36_validation_setterMessageShouldntExistsOnTarget
 	targetClass compile: 'iv1: anObject
 ^anObject + 5'.
 	
-	self 
-		should: [MoveInstanceVariableRectoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2']
-		raise: RefactoringError
-		withExceptionDo: [ :error |
-			self assert: MoveInstanceVariableRectoring setterExistsOnTargetClassErrorMessage equals: error messageText ].
+	self
+		assertCreation: [MoveInstanceVariableRectoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'] 
+		failsWith: [MoveInstanceVariableRectoring setterExistsOnTargetClassErrorMessage].
 	
 
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:04:39'!
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 2/25/2023 00:33:14'!
 test37_validation_instanceVariableToMoveShouldExistsOnSource
 
 	| sourceClass targetClass |
@@ -1069,16 +1060,12 @@ test37_validation_instanceVariableToMoveShouldExistsOnSource
 	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2'.
 	targetClass := self createClassNamed: #TargetClass.
 	
-	self 
-		should: [MoveInstanceVariableRectoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2']
-		raise: RefactoringError
-		withExceptionDo: [ :error |
-			self assert: MoveInstanceVariableRectoring instanceVariableToMoveShouldExistOnSourceClassErrorMessage equals: error messageText ].
-	
+	self
+		assertCreation: [MoveInstanceVariableRectoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'] 
+		failsWith: [MoveInstanceVariableRectoring instanceVariableToMoveShouldExistOnSourceClassErrorMessage].
+		! !
 
-	! !
-
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:04:32'!
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 2/25/2023 00:33:46'!
 test38_validation_instanceVariableToAccessThroughShouldExistsOnSource
 
 	| sourceClass targetClass |
@@ -1086,32 +1073,24 @@ test38_validation_instanceVariableToAccessThroughShouldExistsOnSource
 	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv1'.
 	targetClass := self createClassNamed: #TargetClass.
 	
-	self 
-		should: [MoveInstanceVariableRectoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2']
-		raise: RefactoringError
-		withExceptionDo: [ :error |
-			self assert: MoveInstanceVariableRectoring instanceVariableToAccessThroughShouldExistOnSourceClassErrorMessage equals: error messageText ].
-	
+	self
+		assertCreation: [MoveInstanceVariableRectoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'] 
+		failsWith: [MoveInstanceVariableRectoring instanceVariableToAccessThroughShouldExistOnSourceClassErrorMessage].
+		! !
 
-	! !
-
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 1/12/2023 23:09:39'!
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 2/25/2023 00:34:43'!
 test39_validation_souceclassAndTargetClassCanNotBeTheSame
 
 	| sourceClass |
 	
 	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv3'.
 	
-	self 
-		should: [MoveInstanceVariableRectoring named: 'iv2' from: sourceClass to: sourceClass accessingThrough: 'iv3']
-		raise: RefactoringError
-		withExceptionDo: [ :error |
-			self assert: MoveInstanceVariableRectoring souceClassAndTargetClassCanNotBeTheSameErrorMessage equals: error messageText ].
-	
+	self
+		assertCreation: [MoveInstanceVariableRectoring named: 'iv2' from: sourceClass to: sourceClass accessingThrough: 'iv3'] 
+		failsWith: [MoveInstanceVariableRectoring souceClassAndTargetClassCanNotBeTheSameErrorMessage].
+		! !
 
-	! !
-
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 1/12/2023 23:17:19'!
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 2/25/2023 00:35:51'!
 test40_validation_targetClassCanNotBeSuperClassOfSourceClass
 
 	| sourceClass targetClass |
@@ -1119,17 +1098,11 @@ test40_validation_targetClassCanNotBeSuperClassOfSourceClass
 	targetClass := self createClassNamed: #TargetSubClass.
 	sourceClass := self createClassNamed: #SourceClass subclassOf: targetClass instanceVariableNames: 'iv2 iv3'.
 	
-	
-	self 
-		should: [MoveInstanceVariableRectoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3']
-		raise: RefactoringError
-		withExceptionDo: [ :error |
-			self assert: MoveInstanceVariableRectoring targetClassCanNotBeSuperClassOfSourceClassErrorMessage equals: error messageText ].
-	
+	self
+		assertCreation: [MoveInstanceVariableRectoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'] 
+		failsWith: [MoveInstanceVariableRectoring targetClassCanNotBeSuperClassOfSourceClassErrorMessage].! !
 
-	! !
-
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 1/12/2023 23:28:50'!
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 2/25/2023 00:36:24'!
 test41_validation_targetClassCanNotBeSubClassOfSourceClass
 
 	| sourceClass targetClass |
@@ -1137,14 +1110,10 @@ test41_validation_targetClassCanNotBeSubClassOfSourceClass
 	sourceClass := self createClassNamed: #SourceClass  instanceVariableNames: 'iv2 iv3'.
 	targetClass := self createClassNamed: #TargetSubClass subclassOf: sourceClass.
 	
-	self 
-		should: [MoveInstanceVariableRectoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3']
-		raise: RefactoringError
-		withExceptionDo: [ :error |
-			self assert: MoveInstanceVariableRectoring targetClassCanNotBeSubClassOfSourceClassErrorMessage equals: error messageText ].
-	
-
-	! !
+	self
+		assertCreation: [MoveInstanceVariableRectoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'] 
+		failsWith: [MoveInstanceVariableRectoring targetClassCanNotBeSubClassOfSourceClassErrorMessage].
+		! !
 
 !MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 1/21/2023 11:14:45'!
 test42_instanceVariableToAccessThroughShouldExistsOnSourceHierarchy
@@ -1161,70 +1130,6 @@ test42_instanceVariableToAccessThroughShouldExistsOnSourceHierarchy
 	self deny: (sourceClass instVarNames includes: 'iv1').
 	self assert: (targetClass instVarNames includes: 'iv1').
 	! !
-
-!MoveInstanceVariableApplier methodsFor: 'initialization' stamp: 'mc 2/21/2023 03:13:04'!
-askTargetClassName
-	| targetClassNameTmp |
-	targetClassNameTmp := ClassNameRequestMorph request: 'Enter target class name:' initialAnswer: '' orCancel: requestExitBlock.
-	"self halt."
-	targetClassNameTmp := targetClassNameTmp withoutSeparators.
-	targetClass := Smalltalk at: targetClassNameTmp asSymbol ifAbsent: [Refactoring refactoringErrorClass signal: 'Cant find the target class'].! !
-
-!MoveInstanceVariableApplier methodsFor: 'initialization' stamp: 'mc 1/6/2023 00:10:07'!
-createRefactoring
-	^MoveInstanceVariableRectoring 
-		named: instanceVariableName 
-		from: classToRefactor 
-		to: targetClass
-		accessingThrough: accessingThroughinstanceVariableName.! !
-
-!MoveInstanceVariableApplier methodsFor: 'initialization' stamp: 'mc 1/5/2023 18:23:52'!
-selectVariableLabel
-	^'Select variable to access through'! !
-
-!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 2/3/2023 00:18:03'!
-chooseInstanceVariableToAccessThrough
-	| vars index |
-	"self halt."
-	vars _ classToRefactor allInstVarNames sorted.
-	vars _ vars reject: [ :anInstanceVariable | anInstanceVariable = instanceVariableName ].
-	vars isEmpty ifTrue: [Refactoring refactoringErrorClass signal: 'There is no instance variable to access through' ].
-	
-	index _ (PopUpMenu labelArray: vars lines: #()) startUpWithCaption: self selectVariableLabel.
-	index = 0 ifTrue: [^self endRequest].
-	accessingThroughinstanceVariableName := vars at: index.! !
-
-!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 1/22/2023 02:07:44'!
-chooseInstanceVariableToMove
-	instanceVariableName ifNotNil: [ ^self ].
-	
-	classToRefactor 
-		chooseDefiningInstanceVariableAlphabeticallyWith: self selectVariableToMoveLabel
-		thenDo: [ :anInstanceVariable | ^instanceVariableName := anInstanceVariable ].
-		
-	self endRequest ! !
-
-!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 2/7/2023 23:44:01'!
-requestRefactoringParameters
-
-	self 
-		chooseInstanceVariableToMove;
-		selectClassWichInstaceVariableIsDefined;
-		chooseInstanceVariableToAccessThrough;
-		askTargetClassName! !
-
-!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 2/9/2023 23:33:52'!
-selectClassWichInstaceVariableIsDefined
-	| classToRefactorWithIVDefined |
-	"self halt."
-	classToRefactorWithIVDefined := classToRefactor whichClassDefinesInstanceVariable: instanceVariableName ifNone: [Refactoring refactoringErrorClass signal: 'Instance variable ', instanceVariableName, ' does not exist in ', targetClass name, ' herarchy'].
-	classToRefactorWithIVDefined = classToRefactor ifFalse: [ 
-		Refactoring refactoringWarning: 'Instance variable ', instanceVariableName, ' is not defined on class ', classToRefactor name.
-		classToRefactor := classToRefactorWithIVDefined ]! !
-
-!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 1/22/2023 02:08:37'!
-selectVariableToMoveLabel
-	^'Choose instance variable to move'! !
 
 !MoveInstanceVariableRectoring methodsFor: 'initialization' stamp: 'mc 10/6/2022 01:06:32'!
 initializeNamed: anInstVarNameSourceClass from: aSourceClass to: aTargetClass in: anInstVarNameTargetClass 
@@ -1410,17 +1315,81 @@ targetClassCanNotBeSubClassOfSourceClassErrorMessage
 targetClassCanNotBeSuperClassOfSourceClassErrorMessage
 	^'Target class can not be super class of source class. Use push-up refactoring'! !
 
-!MoveInstanceVariableRectoring class methodsFor: 'instance creation' stamp: 'mc 1/21/2023 11:13:28'!
+!MoveInstanceVariableRectoring class methodsFor: 'instance creation' stamp: 'mc 2/24/2023 09:25:42'!
 named: instVarNameSourceClass from: sourceClass to: targetClass accessingThrough: instVarNameTargetClass 
-	(sourceClass = targetClass) ifTrue: [ RefactoringError signal: self souceClassAndTargetClassCanNotBeTheSameErrorMessage ].
-	(targetClass allSubclasses includes: sourceClass) ifTrue: [ RefactoringError signal: self targetClassCanNotBeSuperClassOfSourceClassErrorMessage ].
-	(sourceClass allSubclasses includes: targetClass) ifTrue: [ RefactoringError signal: self targetClassCanNotBeSubClassOfSourceClassErrorMessage ].
-	(targetClass allSelectors includes: instVarNameSourceClass asSymbol) ifTrue: [ RefactoringError signal: self getterExistsOnTargetClassErrorMessage ].
-	(targetClass allInstVarNamesEverywhere includes: instVarNameSourceClass) ifTrue: [ RefactoringError signal: self instanceVariableExistsOnTargetHierarchyErrorMessage ].
-	(targetClass allSelectors includes: (instVarNameSourceClass,':') asSymbol) ifTrue: [ RefactoringError signal: self setterExistsOnTargetClassErrorMessage ].
-	(sourceClass instVarNames includes: instVarNameSourceClass) ifFalse: [ RefactoringError signal: self instanceVariableToMoveShouldExistOnSourceClassErrorMessage ].
-	(sourceClass allInstVarNames includes: instVarNameTargetClass) ifFalse: [ RefactoringError signal: self instanceVariableToAccessThroughShouldExistOnSourceClassErrorMessage ].
+	(sourceClass = targetClass) ifTrue: [ self refactoringError: self souceClassAndTargetClassCanNotBeTheSameErrorMessage ].
+	(targetClass allSubclasses includes: sourceClass) ifTrue: [ self refactoringError: self targetClassCanNotBeSuperClassOfSourceClassErrorMessage ].
+	(sourceClass allSubclasses includes: targetClass) ifTrue: [ self refactoringError: self targetClassCanNotBeSubClassOfSourceClassErrorMessage ].
+	(targetClass allSelectors includes: instVarNameSourceClass asSymbol) ifTrue: [ self refactoringError: self getterExistsOnTargetClassErrorMessage ].
+	(targetClass allInstVarNamesEverywhere includes: instVarNameSourceClass) ifTrue: [ self refactoringError: self instanceVariableExistsOnTargetHierarchyErrorMessage ].
+	(targetClass allSelectors includes: (instVarNameSourceClass,':') asSymbol) ifTrue: [ self refactoringError: self setterExistsOnTargetClassErrorMessage ].
+	(sourceClass instVarNames includes: instVarNameSourceClass) ifFalse: [ self refactoringError: self instanceVariableToMoveShouldExistOnSourceClassErrorMessage ].
+	(sourceClass allInstVarNames includes: instVarNameTargetClass) ifFalse: [ self refactoringError: self instanceVariableToAccessThroughShouldExistOnSourceClassErrorMessage ].
 	^self new initializeNamed: instVarNameSourceClass from: sourceClass to: targetClass in: instVarNameTargetClass .! !
+
+!MoveInstanceVariableApplier methodsFor: 'initialization' stamp: 'mc 2/21/2023 03:13:04'!
+askTargetClassName
+	| targetClassNameTmp |
+	targetClassNameTmp := ClassNameRequestMorph request: 'Enter target class name:' initialAnswer: '' orCancel: requestExitBlock.
+	"self halt."
+	targetClassNameTmp := targetClassNameTmp withoutSeparators.
+	targetClass := Smalltalk at: targetClassNameTmp asSymbol ifAbsent: [Refactoring refactoringErrorClass signal: 'Cant find the target class'].! !
+
+!MoveInstanceVariableApplier methodsFor: 'initialization' stamp: 'mc 1/6/2023 00:10:07'!
+createRefactoring
+	^MoveInstanceVariableRectoring 
+		named: instanceVariableName 
+		from: classToRefactor 
+		to: targetClass
+		accessingThrough: accessingThroughinstanceVariableName.! !
+
+!MoveInstanceVariableApplier methodsFor: 'initialization' stamp: 'mc 1/5/2023 18:23:52'!
+selectVariableLabel
+	^'Select variable to access through'! !
+
+!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 2/3/2023 00:18:03'!
+chooseInstanceVariableToAccessThrough
+	| vars index |
+	"self halt."
+	vars _ classToRefactor allInstVarNames sorted.
+	vars _ vars reject: [ :anInstanceVariable | anInstanceVariable = instanceVariableName ].
+	vars isEmpty ifTrue: [Refactoring refactoringErrorClass signal: 'There is no instance variable to access through' ].
+	
+	index _ (PopUpMenu labelArray: vars lines: #()) startUpWithCaption: self selectVariableLabel.
+	index = 0 ifTrue: [^self endRequest].
+	accessingThroughinstanceVariableName := vars at: index.! !
+
+!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 1/22/2023 02:07:44'!
+chooseInstanceVariableToMove
+	instanceVariableName ifNotNil: [ ^self ].
+	
+	classToRefactor 
+		chooseDefiningInstanceVariableAlphabeticallyWith: self selectVariableToMoveLabel
+		thenDo: [ :anInstanceVariable | ^instanceVariableName := anInstanceVariable ].
+		
+	self endRequest ! !
+
+!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 2/7/2023 23:44:01'!
+requestRefactoringParameters
+
+	self 
+		chooseInstanceVariableToMove;
+		selectClassWichInstaceVariableIsDefined;
+		chooseInstanceVariableToAccessThrough;
+		askTargetClassName! !
+
+!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 2/9/2023 23:33:52'!
+selectClassWichInstaceVariableIsDefined
+	| classToRefactorWithIVDefined |
+	"self halt."
+	classToRefactorWithIVDefined := classToRefactor whichClassDefinesInstanceVariable: instanceVariableName ifNone: [Refactoring refactoringErrorClass signal: 'Instance variable ', instanceVariableName, ' does not exist in ', targetClass name, ' herarchy'].
+	classToRefactorWithIVDefined = classToRefactor ifFalse: [ 
+		Refactoring refactoringWarning: 'Instance variable ', instanceVariableName, ' is not defined on class ', classToRefactor name.
+		classToRefactor := classToRefactorWithIVDefined ]! !
+
+!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 1/22/2023 02:08:37'!
+selectVariableToMoveLabel
+	^'Choose instance variable to move'! !
 
 !TesisRefactoringMenu class methodsFor: 'as yet unclassified' stamp: 'mc 2/7/2023 01:42:04'!
 classListMenuOptions
