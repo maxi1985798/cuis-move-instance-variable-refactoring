@@ -18,5 +18,9 @@ All tests are green in CuisUniversity-5655
 
 1. Right click on instance variable name to move and select `refactorings` -> `Move Instance Variable`
 ![imgs/img1.jpg](imgs/img1.jpg)
-2. Just install package **MoveInstanceVariableRefactoring.pck.st** like any other
-3. Restart VM
+2. Select variable to access through
+![imgs/img2.jpg](imgs/img2.jpg)
+3. Enter the target class where the variable is going to move
+![imgs/img3.jpg](imgs/img3.jpg)
+4. Done. Your varible is moved and all its references are repalced
+![imgs/img4.jpg](imgs/img4.jpg)
