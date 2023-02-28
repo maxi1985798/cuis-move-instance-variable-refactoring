@@ -17,6 +17,6 @@ All tests are green in CuisUniversity-5655
 ## How to use
 
 1. Right click on instance variable name to move and select `refactorings` -> `Move Instance Variable`
-![Alt text](/img/img1.jpg)
+![img/img1.jpg](img/img1.jpg)
 2. Just install package **MoveInstanceVariableRefactoring.pck.st** like any other
 3. Restart VM
