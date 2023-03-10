@@ -1,6 +1,6 @@
-'From Cuis 6.0 [latest update: #5655] on 8 March 2023 at 1:21:19 am'!
+'From Cuis 6.0 [latest update: #5655] on 9 March 2023 at 11:55:16 pm'!
 'Description '!
-!provides: 'MoveInstanceVariableRefactoring' 1 29!
+!provides: 'MoveInstanceVariableRefactoring' 1 30!
 SystemOrganization addCategory: 'MoveInstanceVariableRefactoring'!
 
 
@@ -825,8 +825,8 @@ iv6 := iv6 := 1.'.
 iv2 iv6: (iv2 iv6: 1).' equals: (sourceClass compiledMethodAt: #iv6) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 12/30/2022 10:05:35'!
-test30ParenthesisShouldBeUsedOnDoubleAssignation
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 3/9/2023 00:10:05'!
+test30ParenthesisShouldBeUsedOnDoubleAssignationAndCodeRepetition
 
 	| refactoring sourceClass targetClass |
 	
@@ -850,8 +850,8 @@ test30ParenthesisShouldBeUsedOnDoubleAssignation
 	^tmp.' equals: (sourceClass compiledMethodAt: #iv6) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 2/12/2023 23:53:06'!
-test31CodeRepeatedInClousureShouldBeRefactored
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 3/9/2023 00:19:27'!
+test31CodeRepeatedInClousureShouldBeRefactored_oneReadAccessVersion
 
 	| refactoring sourceClass targetClass |
 	
@@ -873,50 +873,8 @@ test31CodeRepeatedInClousureShouldBeRefactored
 		]' equals: (sourceClass compiledMethodAt: #accessIv6) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 2/25/2023 00:26:08'!
-test31_validation_getterMessageShouldntExistsOnTarget
-
-	| sourceClass targetClass |
-	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2'.
-	sourceClass compile: 'methodReadsIv1
-^iv1'.
-	targetClass := self createClassNamed: #TargetClass.
-	targetClass compile: 'iv1
-^5'.
-	
-	self 
-		assertCreation: [MoveInstanceVariableRectoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'] 
-		failsWith: [MoveInstanceVariableRectoring getterExistsOnTargetClassErrorMessage].
-	
-
-	! !
-
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 2/15/2023 02:46:53'!
-test32CodeRepeatedInClousureShouldBeRefactored_assingn
-
-	| refactoring sourceClass targetClass |
-	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2'.
-	sourceClass compile: 'accessIv1
-	iv1 _ [
-		iv1 _ [iv1 + iv1]. 
-		iv1 _ [ iv1 _ [iv1 + iv1] ]
-		]'.
-	targetClass := self createClassNamed: #TargetClass.
-	
-	refactoring := MoveInstanceVariableRectoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'.
-	refactoring apply.
-
-	self assert: 'accessIv1
-	iv2 iv1: [
-		iv2 iv1: [iv2 iv1 + iv2 iv1]. 
-		iv2 iv1: [ iv2 iv1: [iv2 iv1 + iv2 iv1] ]
-		]' equals: (sourceClass compiledMethodAt: #accessIv1) sourceCode.
-	! !
-
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 2/15/2023 02:25:02'!
-test32CodeRepeatedInClousureShouldBeRefactored_readVariable
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 3/9/2023 23:38:04'!
+test32CodeRepeatedInClousureShouldBeRefactored_twoReadAceessVersion
 
 	| refactoring sourceClass targetClass |
 	
@@ -938,27 +896,31 @@ test32CodeRepeatedInClousureShouldBeRefactored_readVariable
 		]' equals: (sourceClass compiledMethodAt: #accessIv1) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 2/25/2023 00:27:15'!
-test32_validation_getterMessageShouldntExistsOnTarget
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 3/9/2023 23:38:25'!
+test33CodeRepeatedInClousureShouldBeRefactored_assingn
 
-	| sourceClass targetClass |
+	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv3'.
-	sourceClass compile: 'methodReadsIv1
-^iv2'.
+	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2'.
+	sourceClass compile: 'accessIv1
+	iv1 _ [
+		iv1 _ [iv1 + iv1]. 
+		iv1 _ [ iv1 _ [iv1 + iv1] ]
+		]'.
 	targetClass := self createClassNamed: #TargetClass.
-	targetClass compile: 'iv2
-^5'.
 	
-	self
-		assertCreation: [MoveInstanceVariableRectoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'] 
-		failsWith: [MoveInstanceVariableRectoring getterExistsOnTargetClassErrorMessage].
-	
+	refactoring := MoveInstanceVariableRectoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'.
+	refactoring apply.
 
+	self assert: 'accessIv1
+	iv2 iv1: [
+		iv2 iv1: [iv2 iv1 + iv2 iv1]. 
+		iv2 iv1: [ iv2 iv1: [iv2 iv1 + iv2 iv1] ]
+		]' equals: (sourceClass compiledMethodAt: #accessIv1) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 2/15/2023 03:05:07'!
-test33CodeWithDiferentStructureInClousureShouldBeRefactored
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 3/9/2023 23:38:40'!
+test34CodeWithDiferentStructureInClousureShouldBeRefactored
 
 	| refactoring sourceClass targetClass |
 	
@@ -980,8 +942,46 @@ test33CodeWithDiferentStructureInClousureShouldBeRefactored
 		]' equals: (sourceClass compiledMethodAt: #accessIv1) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 2/25/2023 00:28:10'!
-test33_validation_getterMessageShouldntExistsOnTargetSuperclass
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 3/9/2023 23:16:15'!
+test36_validation_getterMessageShouldntExistsOnTarget
+
+	| sourceClass targetClass |
+	
+	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2'.
+	sourceClass compile: 'methodReadsIv1
+^iv1'.
+	targetClass := self createClassNamed: #TargetClass.
+	targetClass compile: 'iv1
+^5'.
+	
+	self 
+		assertCreation: [MoveInstanceVariableRectoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'] 
+		failsWith: [MoveInstanceVariableRectoring getterExistsOnTargetClassErrorMessage].
+	
+
+	! !
+
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 3/9/2023 23:16:07'!
+test37_validation_getterMessageShouldntExistsOnTarget
+
+	| sourceClass targetClass |
+	
+	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv3'.
+	sourceClass compile: 'methodReadsIv1
+^iv2'.
+	targetClass := self createClassNamed: #TargetClass.
+	targetClass compile: 'iv2
+^5'.
+	
+	self
+		assertCreation: [MoveInstanceVariableRectoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'] 
+		failsWith: [MoveInstanceVariableRectoring getterExistsOnTargetClassErrorMessage].
+	
+
+	! !
+
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 3/9/2023 23:15:56'!
+test38_validation_getterMessageShouldntExistsOnTargetSuperclass
 
 	| sourceClass targetClass targetSuperClass |
 	
@@ -1000,8 +1000,8 @@ test33_validation_getterMessageShouldntExistsOnTargetSuperclass
 
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 2/25/2023 00:29:05'!
-test34_validation_instanceVariableShouldntExistsOnTarget
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 3/9/2023 23:15:47'!
+test39_validation_instanceVariableShouldntExistsOnTarget
 
 	| sourceClass targetClass |
 	
@@ -1013,8 +1013,8 @@ test34_validation_instanceVariableShouldntExistsOnTarget
 		failsWith: [MoveInstanceVariableRectoring instanceVariableExistsOnTargetHierarchyErrorMessage].
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 2/25/2023 00:31:17'!
-test35_validation_instanceVariableShouldntExistsOnTargetSubclass
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 3/9/2023 23:15:37'!
+test40_validation_instanceVariableShouldntExistsOnTargetSubclass
 
 	| sourceClass targetClass |
 	
@@ -1029,8 +1029,8 @@ test35_validation_instanceVariableShouldntExistsOnTargetSubclass
 
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 2/25/2023 00:32:13'!
-test36_validation_setterMessageShouldntExistsOnTarget
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 3/9/2023 23:12:48'!
+test41_validation_setterMessageShouldntExistsOnTarget
 
 	| sourceClass targetClass |
 	
@@ -1048,69 +1048,6 @@ test36_validation_setterMessageShouldntExistsOnTarget
 
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 2/25/2023 00:33:14'!
-test37_validation_instanceVariableToMoveShouldExistsOnSource
-
-	| sourceClass targetClass |
-	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2'.
-	targetClass := self createClassNamed: #TargetClass.
-	
-	self
-		assertCreation: [MoveInstanceVariableRectoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'] 
-		failsWith: [MoveInstanceVariableRectoring instanceVariableToMoveShouldExistOnSourceClassErrorMessage].
-		! !
-
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 2/25/2023 00:33:46'!
-test38_validation_instanceVariableToAccessThroughShouldExistsOnSource
-
-	| sourceClass targetClass |
-	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv1'.
-	targetClass := self createClassNamed: #TargetClass.
-	
-	self
-		assertCreation: [MoveInstanceVariableRectoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'] 
-		failsWith: [MoveInstanceVariableRectoring instanceVariableToAccessThroughShouldExistOnSourceClassErrorMessage].
-		! !
-
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 2/25/2023 00:34:43'!
-test39_validation_souceclassAndTargetClassCanNotBeTheSame
-
-	| sourceClass |
-	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv3'.
-	
-	self
-		assertCreation: [MoveInstanceVariableRectoring named: 'iv2' from: sourceClass to: sourceClass accessingThrough: 'iv3'] 
-		failsWith: [MoveInstanceVariableRectoring souceClassAndTargetClassCanNotBeTheSameErrorMessage].
-		! !
-
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 2/25/2023 00:35:51'!
-test40_validation_targetClassCanNotBeSuperClassOfSourceClass
-
-	| sourceClass targetClass |
-	
-	targetClass := self createClassNamed: #TargetSubClass.
-	sourceClass := self createClassNamed: #SourceClass subclassOf: targetClass instanceVariableNames: 'iv2 iv3'.
-	
-	self
-		assertCreation: [MoveInstanceVariableRectoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'] 
-		failsWith: [MoveInstanceVariableRectoring targetClassCanNotBeSuperClassOfSourceClassErrorMessage].! !
-
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 2/25/2023 00:36:24'!
-test41_validation_targetClassCanNotBeSubClassOfSourceClass
-
-	| sourceClass targetClass |
-	
-	sourceClass := self createClassNamed: #SourceClass  instanceVariableNames: 'iv2 iv3'.
-	targetClass := self createClassNamed: #TargetSubClass subclassOf: sourceClass.
-	
-	self
-		assertCreation: [MoveInstanceVariableRectoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'] 
-		failsWith: [MoveInstanceVariableRectoring targetClassCanNotBeSubClassOfSourceClassErrorMessage].
-		! !
-
 !MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 1/21/2023 11:14:45'!
 test42_instanceVariableToAccessThroughShouldExistsOnSourceHierarchy
 
@@ -1126,6 +1063,69 @@ test42_instanceVariableToAccessThroughShouldExistsOnSourceHierarchy
 	self deny: (sourceClass instVarNames includes: 'iv1').
 	self assert: (targetClass instVarNames includes: 'iv1').
 	! !
+
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 3/9/2023 23:12:38'!
+test42_validation_instanceVariableToMoveShouldExistsOnSource
+
+	| sourceClass targetClass |
+	
+	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2'.
+	targetClass := self createClassNamed: #TargetClass.
+	
+	self
+		assertCreation: [MoveInstanceVariableRectoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'] 
+		failsWith: [MoveInstanceVariableRectoring instanceVariableToMoveShouldExistOnSourceClassErrorMessage].
+		! !
+
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 3/9/2023 23:12:26'!
+test43_validation_instanceVariableToAccessThroughShouldExistsOnSource
+
+	| sourceClass targetClass |
+	
+	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv1'.
+	targetClass := self createClassNamed: #TargetClass.
+	
+	self
+		assertCreation: [MoveInstanceVariableRectoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'] 
+		failsWith: [MoveInstanceVariableRectoring instanceVariableToAccessThroughShouldExistOnSourceClassErrorMessage].
+		! !
+
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 3/9/2023 23:12:13'!
+test44_validation_souceclassAndTargetClassCanNotBeTheSame
+
+	| sourceClass |
+	
+	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv3'.
+	
+	self
+		assertCreation: [MoveInstanceVariableRectoring named: 'iv2' from: sourceClass to: sourceClass accessingThrough: 'iv3'] 
+		failsWith: [MoveInstanceVariableRectoring souceClassAndTargetClassCanNotBeTheSameErrorMessage].
+		! !
+
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 3/9/2023 23:12:01'!
+test45_validation_targetClassCanNotBeSuperClassOfSourceClass
+
+	| sourceClass targetClass |
+	
+	targetClass := self createClassNamed: #TargetSubClass.
+	sourceClass := self createClassNamed: #SourceClass subclassOf: targetClass instanceVariableNames: 'iv2 iv3'.
+	
+	self
+		assertCreation: [MoveInstanceVariableRectoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'] 
+		failsWith: [MoveInstanceVariableRectoring targetClassCanNotBeSuperClassOfSourceClassErrorMessage].! !
+
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 3/9/2023 23:11:53'!
+test46_validation_targetClassCanNotBeSubClassOfSourceClass
+
+	| sourceClass targetClass |
+	
+	sourceClass := self createClassNamed: #SourceClass  instanceVariableNames: 'iv2 iv3'.
+	targetClass := self createClassNamed: #TargetSubClass subclassOf: sourceClass.
+	
+	self
+		assertCreation: [MoveInstanceVariableRectoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'] 
+		failsWith: [MoveInstanceVariableRectoring targetClassCanNotBeSubClassOfSourceClassErrorMessage].
+		! !
 
 !MoveInstanceVariableRectoring methodsFor: 'initialization' stamp: 'mc 3/7/2023 23:46:09'!
 initializeNamed: anInstVarNameSourceClass from: aSourceClass to: aTargetClass in: anInstVarNameTargetClass 
@@ -1307,7 +1307,7 @@ modifiedWrites
 resultCode
 	^resultCode ! !
 
-!CodeForNodeResult class methodsFor: 'as yet unclassified' stamp: 'mc 3/7/2023 01:57:01'!
+!CodeForNodeResult class methodsFor: 'instance creation' stamp: 'mc 3/7/2023 01:57:01'!
 newWith: newCode modifiedReads: modifiedReads modifiedWrites: modifiedWrites
 	^self new initielizeWith: newCode modifiedReads: modifiedReads modifiedWrites: modifiedWrites! !
 
