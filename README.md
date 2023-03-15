@@ -22,5 +22,5 @@ All tests are green in CuisUniversity-5655
 ![imgs/img2.jpg](imgs/img2.jpg)
 3. Enter the target class where the variable is going to move
 ![imgs/img3.jpg](imgs/img3.jpg)
-4. Done. Your varible is moved and all its references are repalced
+4. Done. Your variable is moved and all its references are replaced
 ![imgs/img4.jpg](imgs/img4.jpg)
