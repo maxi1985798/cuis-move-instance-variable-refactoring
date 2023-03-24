@@ -1,6 +1,6 @@
-'From Cuis 6.0 [latest update: #5655] on 14 March 2023 at 10:22:12 pm'!
+'From Cuis 6.0 [latest update: #5706] on 24 March 2023 at 1:04:45 am'!
 'Description '!
-!provides: 'MoveInstanceVariableRefactoring' 1 32!
+!provides: 'MoveInstanceVariableRefactoring' 1 33!
 SystemOrganization addCategory: 'MoveInstanceVariableRefactoring'!
 
 
@@ -275,7 +275,7 @@ test01CanMoveInstVarWhenThereIsNoReferenceToSourceIV
 	self assert: (targetClass instVarNames includes: 'iv1').
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 3/24/2023 00:48:13'!
 test02CanMoveInstVarWhenThereIsAReferenceToSourceIV
 
 	| refactoring sourceClass targetClass |
@@ -289,7 +289,10 @@ test02CanMoveInstVarWhenThereIsAReferenceToSourceIV
 	
 	self assert: 'iv1', String newLineString, String tab, '^iv1' equals: (targetClass compiledMethodAt: #iv1) sourceCode.
 	self assert: 'iv1 ^iv2 iv1' equals: (sourceClass compiledMethodAt: #iv1) sourceCode.
-	
+	self assert: 1 equals: targetClass methodCategories size.
+	self assert: MoveInstanceVariableRefactoring getterSetterCategoryName equals: targetClass methodCategories first.
+	self assert: 1 equals: (targetClass selectorsInCategory: MoveInstanceVariableRefactoring getterSetterCategoryName) size.
+	self assert: #iv1 equals: (targetClass selectorsInCategory: MoveInstanceVariableRefactoring getterSetterCategoryName) first.
 	! !
 
 !MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
@@ -374,7 +377,7 @@ test07CanMoveInstVarWhenThereAreTwoReferencesToSourceIV
 	self assert: 'secondRef ^iv2 iv5' equals: (sourceClass compiledMethodAt: #secondRef) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 3/24/2023 00:48:38'!
 test08CanMoveInstVarWhenThereIsAWriteReferencesToSourceIV
 
 	| refactoring sourceClass targetClass |
@@ -390,6 +393,10 @@ test08CanMoveInstVarWhenThereIsAWriteReferencesToSourceIV
 	self assert: (targetClass instVarNames includes: 'iv5').
 	self assert: 'iv5: anObject', String newLineString, String tab, '^iv5 := anObject.' equals: (targetClass compiledMethodAt: #iv5:) sourceCode.
 	self assert: 'iv5: anObject iv2 iv5: anObject.' equals: (sourceClass compiledMethodAt: #iv5:) sourceCode.
+	self assert: 1 equals: targetClass methodCategories size.
+	self assert: MoveInstanceVariableRefactoring getterSetterCategoryName equals: targetClass methodCategories first.
+	self assert: 1 equals: (targetClass selectorsInCategory: MoveInstanceVariableRefactoring getterSetterCategoryName) size.
+	self assert: #iv5: equals: (targetClass selectorsInCategory: MoveInstanceVariableRefactoring getterSetterCategoryName) first.
 	! !
 
 !MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
@@ -1154,15 +1161,24 @@ accessInSourceClass
 		].
 	^ accessMethods! !
 
-!MoveInstanceVariableRefactoring methodsFor: 'private' stamp: 'mc 1/10/2023 01:14:12'!
+!MoveInstanceVariableRefactoring methodsFor: 'private' stamp: 'mc 3/24/2023 00:44:36'!
+compileSource: sourceCode on: aTargetClass 
+	^ aTargetClass 
+		compile: sourceCode
+		classified: self class getterSetterCategoryName ! !
+
+!MoveInstanceVariableRefactoring methodsFor: 'private' stamp: 'mc 3/24/2023 00:44:36'!
 createGetterOnTargetClass
+	^self 
+		compileSource: instVarNameSourceClass, String newLineString, String tab, '^', instVarNameSourceClass 
+		on: targetClass 
+! !
 
-	^ targetClass compile: instVarNameSourceClass, String newLineString, String tab, '^', instVarNameSourceClass! !
-
-!MoveInstanceVariableRefactoring methodsFor: 'private' stamp: 'mc 1/11/2023 02:12:59'!
+!MoveInstanceVariableRefactoring methodsFor: 'private' stamp: 'mc 3/24/2023 00:44:36'!
 createSetterOnTargetClass
-	^ targetClass compile: instVarNameSourceClass, ': anObject', 
-	String newLineString, String tab, '^', instVarNameSourceClass, ' := anObject.'! !
+	^self 
+		compileSource: instVarNameSourceClass, ': anObject', String newLineString, String tab, '^', instVarNameSourceClass, ' := anObject.' 
+		on: targetClass.! !
 
 !MoveInstanceVariableRefactoring methodsFor: 'private' stamp: 'HAW 3/14/2023 12:24:15'!
 replaceAccessInSourceClass
@@ -1224,6 +1240,10 @@ named: instVarNameSourceClass from: sourceClass to: targetClass accessingThrough
 	(sourceClass instVarNames includes: instVarNameSourceClass) ifFalse: [ self refactoringError: self instanceVariableToMoveShouldExistOnSourceClassErrorMessage ].
 	(sourceClass allInstVarNames includes: instVarNameTargetClass) ifFalse: [ self refactoringError: self instanceVariableToAccessThroughShouldExistOnSourceClassErrorMessage ].
 	^self new initializeNamed: instVarNameSourceClass from: sourceClass to: targetClass in: instVarNameTargetClass .! !
+
+!MoveInstanceVariableRefactoring class methodsFor: 'category name' stamp: 'mc 3/24/2023 00:38:06'!
+getterSetterCategoryName
+	^'getter-setter'! !
 
 !MoveInstanceVariableApplier methodsFor: 'initialization' stamp: 'mc 2/21/2023 03:13:04'!
 askTargetClassName
