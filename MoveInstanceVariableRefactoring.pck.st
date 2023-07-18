@@ -1,6 +1,6 @@
-'From Cuis 6.0 [latest update: #5706] on 24 March 2023 at 1:04:45 am'!
+'From Cuis 6.0 [latest update: #5921] on 18 July 2023 at 12:29:13 am'!
 'Description '!
-!provides: 'MoveInstanceVariableRefactoring' 1 33!
+!provides: 'MoveInstanceVariableRefactoring' 1 34!
 SystemOrganization addCategory: 'MoveInstanceVariableRefactoring'!
 
 
@@ -1346,13 +1346,13 @@ classListMenuOptions
 	}`.
 	! !
 
-!TesisRefactoringMenu class methodsFor: 'as yet unclassified' stamp: 'mc 2/7/2023 01:22:07'!
+!TesisRefactoringMenu class methodsFor: 'as yet unclassified' stamp: 'mc 7/18/2023 00:27:32'!
 smalltalkEditorCmdShortcutsSpec
 	"
 	SmalltalkEditor initializeCmdShortcuts
 	"
 	^#(
-		#($4	#contextualMoveInstanceVariable:						'Move instance variable what is under cursor')
+		#($Y	#contextualMoveInstanceVariable:						'Move instance variable what is under cursor')
 	)! !
 
 !TesisRefactoringMenu class methodsFor: 'as yet unclassified' stamp: 'mc 2/7/2023 01:13:53'!
