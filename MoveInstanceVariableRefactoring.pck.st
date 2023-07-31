@@ -1,6 +1,6 @@
-'From Cuis 6.0 [latest update: #5921] on 18 July 2023 at 12:29:13 am'!
+'From Cuis 6.0 [latest update: #5962] on 31 July 2023 at 1:35:55 pm'!
 'Description '!
-!provides: 'MoveInstanceVariableRefactoring' 1 34!
+!provides: 'MoveInstanceVariableRefactoring' 1 36!
 SystemOrganization addCategory: 'MoveInstanceVariableRefactoring'!
 
 
@@ -71,7 +71,7 @@ this class returns the code that belongs to "node" with "instanceVariableName" m
 !TesisRefactoringMenu commentStamp: '<historical>' prior: 0!
 Please remove this class after integration!
 
-!CodeForNodeOnMethod methodsFor: 'initialization' stamp: 'mc 3/7/2023 01:32:04'!
+!CodeForNodeOnMethod methodsFor: 'initialization' stamp: 'mc 7/31/2023 13:35:16'!
 initializeFor: aNode replace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver rejectingIntervals: intervals
 	node := aNode.
 	instanceVariableName := instVarNameToReplace.
@@ -200,7 +200,7 @@ sourceRangesOf: aNode
 	
 	^methodNode completeSourceRangesOf: aNode ifAbsent: []! !
 
-!CodeForNodeOnMethod class methodsFor: 'instance creation' stamp: 'mc 2/21/2023 19:32:21'!
+!CodeForNodeOnMethod class methodsFor: 'instance creation' stamp: 'mc 7/31/2023 13:32:35'!
 replace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver 
 	^self 
 		replace: instVarNameToReplace 
