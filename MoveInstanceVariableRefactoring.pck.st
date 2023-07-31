@@ -1,6 +1,6 @@
-'From Cuis 6.0 [latest update: #5962] on 31 July 2023 at 1:35:55 pm'!
+'From Cuis 6.0 [latest update: #5962] on 31 July 2023 at 1:52:50 pm'!
 'Description '!
-!provides: 'MoveInstanceVariableRefactoring' 1 36!
+!provides: 'MoveInstanceVariableRefactoring' 1 37!
 SystemOrganization addCategory: 'MoveInstanceVariableRefactoring'!
 
 
@@ -71,13 +71,13 @@ this class returns the code that belongs to "node" with "instanceVariableName" m
 !TesisRefactoringMenu commentStamp: '<historical>' prior: 0!
 Please remove this class after integration!
 
-!CodeForNodeOnMethod methodsFor: 'initialization' stamp: 'mc 7/31/2023 13:35:16'!
+!CodeForNodeOnMethod methodsFor: 'initialization' stamp: 'HAW 7/26/2023 17:23:36'!
 initializeFor: aNode replace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver rejectingIntervals: intervals
 	node := aNode.
 	instanceVariableName := instVarNameToReplace.
 	compiledMethod := aCompiledMethod.
 	instVarNameTargetClass := instVarNameToUseAsReceiver.
-	methodNode := compiledMethod methodNode.
+	methodNode := compiledMethod notOptimizedMethodNode.
 	intervalsToModify := OrderedCollection new.
 	intervalsToReject := intervals.
 	modifiedReads := 0.
@@ -200,13 +200,13 @@ sourceRangesOf: aNode
 	
 	^methodNode completeSourceRangesOf: aNode ifAbsent: []! !
 
-!CodeForNodeOnMethod class methodsFor: 'instance creation' stamp: 'mc 7/31/2023 13:32:35'!
+!CodeForNodeOnMethod class methodsFor: 'instance creation' stamp: 'HAW 7/26/2023 17:23:41'!
 replace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver 
 	^self 
 		replace: instVarNameToReplace 
 		onMethod: aCompiledMethod 
 		accessingThrough: instVarNameToUseAsReceiver
-		for: aCompiledMethod methodNode! !
+		for: aCompiledMethod notOptimizedMethodNode! !
 
 !CodeForNodeOnMethod class methodsFor: 'instance creation' stamp: 'mc 2/21/2023 19:34:57'!
 replace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver for: aNode
