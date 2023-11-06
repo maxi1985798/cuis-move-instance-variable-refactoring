@@ -1,6 +1,6 @@
-'From Cuis 6.0 [latest update: #5962] on 31 July 2023 at 1:52:50 pm'!
+'From Cuis 6.0 [latest update: #5981] on 6 November 2023 at 2:08:04 am'!
 'Description '!
-!provides: 'MoveInstanceVariableRefactoring' 1 37!
+!provides: 'MoveInstanceVariableRefactoring' 1 38!
 SystemOrganization addCategory: 'MoveInstanceVariableRefactoring'!
 
 
