@@ -1,12 +1,12 @@
-'From Cuis 6.0 [latest update: #5981] on 6 November 2023 at 2:08:04 am'!
+'From Cuis 6.0 [latest update: #5981] on 8 November 2023 at 12:58:46 am'!
 'Description '!
-!provides: 'MoveInstanceVariableRefactoring' 1 38!
+!provides: 'MoveInstanceVariableRefactoring' 1 39!
 SystemOrganization addCategory: 'MoveInstanceVariableRefactoring'!
 
 
 !classDefinition: #CodeForNodeOnMethod category: 'MoveInstanceVariableRefactoring'!
 ParseNodeVisitor subclass: #CodeForNodeOnMethod
-	instanceVariableNames: 'node instanceVariableName compiledMethod intervalsToModify methodNode instVarNameTargetClass nodeInterval newCodeForNode nodeOffsetInSourceCode intervalsToReject modifiedReads modifiedWrites'
+	instanceVariableNames: 'node instanceVariableName compiledMethod intervalsToModify methodNode instVarNameTargetClass nodeInterval newCodeForNode nodeOffsetInSourceCode intervalsToReject modifiedReads modifiedWrites getterToUse setterToUse'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'MoveInstanceVariableRefactoring'!
@@ -26,7 +26,7 @@ MoveInstanceVariableTest class
 
 !classDefinition: #MoveInstanceVariableRefactoring category: 'MoveInstanceVariableRefactoring'!
 Refactoring subclass: #MoveInstanceVariableRefactoring
-	instanceVariableNames: 'instVarNameSourceClass sourceClass targetClass instVarNameTargetClass modifiedReads modifiedWrites'
+	instanceVariableNames: 'instVarNameSourceClass sourceClass targetClass instVarNameTargetClass modifiedReads modifiedWrites getterToUse setterToUse'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'MoveInstanceVariableRefactoring'!
@@ -71,8 +71,8 @@ this class returns the code that belongs to "node" with "instanceVariableName" m
 !TesisRefactoringMenu commentStamp: '<historical>' prior: 0!
 Please remove this class after integration!
 
-!CodeForNodeOnMethod methodsFor: 'initialization' stamp: 'HAW 7/26/2023 17:23:36'!
-initializeFor: aNode replace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver rejectingIntervals: intervals
+!CodeForNodeOnMethod methodsFor: 'initialization' stamp: 'mc 11/7/2023 22:48:24'!
+initializeFor: aNode replace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver usingGetter: aGetterToUse usingSetter: aSetterToUse rejectingIntervals: intervals 
 	node := aNode.
 	instanceVariableName := instVarNameToReplace.
 	compiledMethod := aCompiledMethod.
@@ -81,9 +81,11 @@ initializeFor: aNode replace: instVarNameToReplace onMethod: aCompiledMethod acc
 	intervalsToModify := OrderedCollection new.
 	intervalsToReject := intervals.
 	modifiedReads := 0.
-	modifiedWrites := 0! !
+	modifiedWrites := 0.
+	getterToUse := aGetterToUse .
+	setterToUse := aSetterToUse ! !
 
-!CodeForNodeOnMethod methodsFor: 'visiting' stamp: 'HAW 3/14/2023 12:24:15'!
+!CodeForNodeOnMethod methodsFor: 'visiting' stamp: 'mc 11/7/2023 22:50:30'!
 visitAssignmentNode: anAssignmentNode 
 	| rangesOfassigmentNode assigmentValue newAssignmentCode newCodeForValue nodeReplacer resultForValue |
 
@@ -94,6 +96,8 @@ visitAssignmentNode: anAssignmentNode
 					replace: instanceVariableName 
 					onMethod: compiledMethod 
 					accessingThrough: instVarNameTargetClass 
+					usingGetter: getterToUse
+					usingSetter: setterToUse
 					for: anAssignmentNode value 
 					rejectingIntervals: intervalsToReject.
 	resultForValue :=			nodeReplacer value.
@@ -101,18 +105,18 @@ visitAssignmentNode: anAssignmentNode
 	(((anAssignmentNode value isMessageNode and: [anAssignmentNode value isKeywordMessageSend])) or: [anAssignmentNode value isAssignmentNode ])
 		ifTrue: [assigmentValue := '(', newCodeForValue, ')'.] 
 		ifFalse: [assigmentValue := newCodeForValue.].
-	newAssignmentCode := instVarNameTargetClass, ' ', instanceVariableName, ': ', assigmentValue.
+	newAssignmentCode := instVarNameTargetClass, ' ', setterToUse, ' ', assigmentValue.
 	self registerInterval: rangesOfassigmentNode withModification: newAssignmentCode.
 	modifiedWrites := modifiedWrites + 1.
 	modifiedReads := modifiedReads + resultForValue modifiedReads.! !
 
-!CodeForNodeOnMethod methodsFor: 'visiting' stamp: 'mc 3/7/2023 01:32:52'!
+!CodeForNodeOnMethod methodsFor: 'visiting' stamp: 'mc 11/7/2023 00:46:27'!
 visitInstanceVariableNode: anInstanceVariableNode 
 	| newReadWithGetterCode intervalForInstanceVariableNode |
 	
 	anInstanceVariableNode name = instanceVariableName ifFalse: [^self].
 	intervalForInstanceVariableNode := self firstUnseenIntervalFor: anInstanceVariableNode.
-	newReadWithGetterCode := instVarNameTargetClass, ' ', instanceVariableName.
+	newReadWithGetterCode := instVarNameTargetClass, ' ', getterToUse .
 	self registerInterval: intervalForInstanceVariableNode withModification: newReadWithGetterCode.
 	modifiedReads := modifiedReads + 1. ! !
 
@@ -200,30 +204,57 @@ sourceRangesOf: aNode
 	
 	^methodNode completeSourceRangesOf: aNode ifAbsent: []! !
 
-!CodeForNodeOnMethod class methodsFor: 'instance creation' stamp: 'HAW 7/26/2023 17:23:41'!
+!CodeForNodeOnMethod class methodsFor: 'instance creation' stamp: 'mc 11/7/2023 22:46:52'!
 replace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver 
 	^self 
 		replace: instVarNameToReplace 
 		onMethod: aCompiledMethod 
 		accessingThrough: instVarNameToUseAsReceiver
+		usingGetter: instVarNameToReplace asSymbol
+		usingSetter: (instVarNameToReplace, ':') asSymbol 
 		for: aCompiledMethod notOptimizedMethodNode! !
 
-!CodeForNodeOnMethod class methodsFor: 'instance creation' stamp: 'mc 2/21/2023 19:34:57'!
-replace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver for: aNode
+!CodeForNodeOnMethod class methodsFor: 'instance creation' stamp: 'mc 11/7/2023 23:14:39'!
+replace: anInstVarNameSourceClass onMethod: aMethod accessingThrough: anInstVarNameTargetClass usingGetter: aGetterToUse 
+	^self 
+		replace: anInstVarNameSourceClass
+		onMethod: aMethod
+		accessingThrough: anInstVarNameTargetClass
+		usingGetter: aGetterToUse
+		usingSetter: (anInstVarNameSourceClass, ':') asSymbol 
+		for: aMethod notOptimizedMethodNode! !
+
+!CodeForNodeOnMethod class methodsFor: 'instance creation' stamp: 'mc 11/7/2023 22:45:52'!
+replace: anInstVarNameSourceClass onMethod: aMethod accessingThrough: anInstVarNameTargetClass usingGetter: aGetterToUse usingSetter: aSetterToUse 
+
+	^self 
+		replace: anInstVarNameSourceClass
+		onMethod: aMethod
+		accessingThrough: anInstVarNameTargetClass
+		usingGetter: aGetterToUse
+		usingSetter: aSetterToUse
+		for: aMethod notOptimizedMethodNode! !
+
+!CodeForNodeOnMethod class methodsFor: 'instance creation' stamp: 'mc 11/7/2023 22:46:02'!
+replace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver usingGetter: aGetterToUse usingSetter: aSetterToUse  for: aNode
 	^self 
 		replace: instVarNameToReplace 
 		onMethod: aCompiledMethod 
 		accessingThrough: instVarNameToUseAsReceiver 
+		usingGetter: aGetterToUse
+		usingSetter: aSetterToUse
 		for: aNode
 		rejectingIntervals: OrderedCollection new! !
 
-!CodeForNodeOnMethod class methodsFor: 'instance creation' stamp: 'mc 2/21/2023 19:34:33'!
-replace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver for: aNode rejectingIntervals: intervals
+!CodeForNodeOnMethod class methodsFor: 'instance creation' stamp: 'mc 11/7/2023 22:46:08'!
+replace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver usingGetter: aGetterToUse usingSetter: aSetterToUse  for: aNode rejectingIntervals: intervals
 	^self new 
 		initializeFor: aNode 
 		replace: instVarNameToReplace 
 		onMethod: aCompiledMethod 
 		accessingThrough: instVarNameToUseAsReceiver 
+		usingGetter: aGetterToUse
+		usingSetter: aSetterToUse
 		rejectingIntervals: intervals! !
 
 !MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 10/21/2022 17:51:06'!
@@ -293,6 +324,31 @@ test02CanMoveInstVarWhenThereIsAReferenceToSourceIV
 	self assert: MoveInstanceVariableRefactoring getterSetterCategoryName equals: targetClass methodCategories first.
 	self assert: 1 equals: (targetClass selectorsInCategory: MoveInstanceVariableRefactoring getterSetterCategoryName) size.
 	self assert: #iv1 equals: (targetClass selectorsInCategory: MoveInstanceVariableRefactoring getterSetterCategoryName) first.
+	! !
+
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 11/6/2023 23:53:52'!
+test02CanMoveInstVarWhenThereIsAReferenceToSourceIVAndUseADifferentGetterAsSelector
+
+	| refactoring sourceClass targetClass |
+	
+	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2'.
+	targetClass := self createClassNamed: #TargetClass.
+	sourceClass compile: 'iv1 ^iv1' .
+	
+	refactoring := MoveInstanceVariableRefactoring 
+					named: 'iv1' 
+					from: sourceClass 
+					to: targetClass 
+					accessingThrough: 'iv2' 
+					usingGetter: #iv1Getter.
+	refactoring apply.
+	
+	self assert: 'iv1Getter', String newLineString, String tab, '^iv1' equals: (targetClass sourceCodeAt: #iv1Getter).
+	self assert: 'iv1 ^iv2 iv1Getter' equals: (sourceClass compiledMethodAt: #iv1) sourceCode.
+	self assert: 1 equals: targetClass methodCategories size.
+	self assert: MoveInstanceVariableRefactoring getterSetterCategoryName equals: targetClass methodCategories first.
+	self assert: 1 equals: (targetClass selectorsInCategory: MoveInstanceVariableRefactoring getterSetterCategoryName) size.
+	self assert: #iv1Getter equals: (targetClass selectorsInCategory: MoveInstanceVariableRefactoring getterSetterCategoryName) first.
 	! !
 
 !MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
@@ -415,6 +471,31 @@ test09CanMoveInstVarWhenThereIsAWriteReferencesToSourceIV
 	self assert: (targetClass instVarNames includes: 'iv6').
 	self assert: 'iv6: anObject', String newLineString, String tab,'^iv6 := anObject.' equals: (targetClass compiledMethodAt: #iv6:) sourceCode.
 	self assert: 'iv6: anObject iv2 iv6: anObject.' equals: (sourceClass compiledMethodAt: #iv6:) sourceCode.
+	! !
+
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 11/7/2023 22:52:18'!
+test09CanMoveInstVarWhenThereIsAWriteReferencesToSourceIVAndUseADifferentSetterName
+
+	| refactoring sourceClass targetClass |
+	
+	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
+	sourceClass compile: 'iv6: anObject iv6 := anObject.'.
+	targetClass := self createClassNamed: #TargetClass.
+	
+	refactoring := MoveInstanceVariableRefactoring 
+					named: 'iv6' 
+					from: sourceClass
+					to: targetClass
+					accessingThrough: 'iv2'
+					usingGetter: #iv6 
+					usingSetter: #iv6Setter: 
+					.
+	refactoring apply.
+	
+	self deny: (sourceClass instVarNames includes: 'iv6').
+	self assert: (targetClass instVarNames includes: 'iv6').
+	self assert: 'iv6Setter: anObject', String newLineString, String tab,'^iv6 := anObject.' equals: (targetClass compiledMethodAt: #iv6Setter:) sourceCode.
+	self assert: 'iv6: anObject iv2 iv6Setter: anObject.' equals: (sourceClass compiledMethodAt: #iv6:) sourceCode.
 	! !
 
 !MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
@@ -949,7 +1030,7 @@ test34CodeWithDiferentStructureInClousureShouldBeRefactored
 		]' equals: (sourceClass compiledMethodAt: #accessIv1) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 11/7/2023 23:55:01'!
 test36_validation_getterMessageShouldntExistsOnTarget
 
 	| sourceClass targetClass |
@@ -958,17 +1039,17 @@ test36_validation_getterMessageShouldntExistsOnTarget
 	sourceClass compile: 'methodReadsIv1
 ^iv1'.
 	targetClass := self createClassNamed: #TargetClass.
-	targetClass compile: 'iv1
+	targetClass compile: 'getterIv1
 ^5'.
 	
 	self 
-		assertCreation: [MoveInstanceVariableRefactoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'] 
-		failsWith: [MoveInstanceVariableRefactoring getterExistsOnTargetClassErrorMessage].
+		assertCreation: [MoveInstanceVariableRefactoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'  usingGetter: #getterIv1 usingSetter: #setterIv1:]
+		failsWith: [MoveInstanceVariableRefactoring getterExistsOnTargetHierarchyErrorMessage].
 	
 
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 11/7/2023 23:55:01'!
 test37_validation_getterMessageShouldntExistsOnTarget
 
 	| sourceClass targetClass |
@@ -977,17 +1058,17 @@ test37_validation_getterMessageShouldntExistsOnTarget
 	sourceClass compile: 'methodReadsIv1
 ^iv2'.
 	targetClass := self createClassNamed: #TargetClass.
-	targetClass compile: 'iv2
+	targetClass compile: 'getterIv2
 ^5'.
 	
-	self
-		assertCreation: [MoveInstanceVariableRefactoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'] 
-		failsWith: [MoveInstanceVariableRefactoring getterExistsOnTargetClassErrorMessage].
+	self 
+		assertCreation: [MoveInstanceVariableRefactoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'  usingGetter: #getterIv2 usingSetter: #setterIv2:] 
+		failsWith: [MoveInstanceVariableRefactoring getterExistsOnTargetHierarchyErrorMessage].
 	
 
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 11/7/2023 23:55:01'!
 test38_validation_getterMessageShouldntExistsOnTargetSuperclass
 
 	| sourceClass targetClass targetSuperClass |
@@ -996,13 +1077,13 @@ test38_validation_getterMessageShouldntExistsOnTargetSuperclass
 	sourceClass compile: 'methodReadsIv1
 ^iv2'.
 	targetSuperClass := self createClassNamed: #TargetSuperClass .
-	targetSuperClass compile: 'iv2
+	targetSuperClass compile: 'getterIv2
 ^5'.	
 	targetClass := self createClassNamed: #TargetClass subclassOf: targetSuperClass.
 
 	self
-		assertCreation: [MoveInstanceVariableRefactoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'] 
-		failsWith: [MoveInstanceVariableRefactoring getterExistsOnTargetClassErrorMessage].
+		assertCreation: [MoveInstanceVariableRefactoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'  usingGetter: #getterIv2 usingSetter: #setterIv2:] 
+		failsWith: [MoveInstanceVariableRefactoring getterExistsOnTargetHierarchyErrorMessage].
 	
 
 	! !
@@ -1036,7 +1117,7 @@ test40_validation_instanceVariableShouldntExistsOnTargetSubclass
 
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 11/7/2023 23:54:36'!
 test41_validation_setterMessageShouldntExistsOnTarget
 
 	| sourceClass targetClass |
@@ -1045,12 +1126,12 @@ test41_validation_setterMessageShouldntExistsOnTarget
 	sourceClass compile: 'methodWritesIv1
 ^iv1 := 1'.
 	targetClass := self createClassNamed: #TargetClass.
-	targetClass compile: 'iv1: anObject
+	targetClass compile: 'setterIv1: anObject
 ^anObject + 5'.
 	
 	self
-		assertCreation: [MoveInstanceVariableRefactoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'] 
-		failsWith: [MoveInstanceVariableRefactoring setterExistsOnTargetClassErrorMessage].
+		assertCreation: [MoveInstanceVariableRefactoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'  usingGetter: #getterIv1 usingSetter: #setterIv1:] 
+		failsWith: [MoveInstanceVariableRefactoring setterExistsOnTargetHierarchyErrorMessage].
 	
 
 	! !
@@ -1134,14 +1215,16 @@ test46_validation_targetClassCanNotBeSubClassOfSourceClass
 		failsWith: [MoveInstanceVariableRefactoring targetClassCanNotBeSubClassOfSourceClassErrorMessage].
 		! !
 
-!MoveInstanceVariableRefactoring methodsFor: 'initialization' stamp: 'mc 3/7/2023 23:46:09'!
-initializeNamed: anInstVarNameSourceClass from: aSourceClass to: aTargetClass in: anInstVarNameTargetClass 
+!MoveInstanceVariableRefactoring methodsFor: 'initialization' stamp: 'mc 11/7/2023 03:17:49'!
+initializeNamed: anInstVarNameSourceClass from: aSourceClass to: aTargetClass accessingThrough: anInstVarNameTargetClass usingGetter: aGetterSelector usingSetter: aSetterSelector 
 	instVarNameSourceClass := anInstVarNameSourceClass.
 	sourceClass := aSourceClass.
 	targetClass := aTargetClass.
 	instVarNameTargetClass := anInstVarNameTargetClass.
 	modifiedReads := 0.
-	modifiedWrites := 0.! !
+	modifiedWrites := 0.
+	getterToUse := aGetterSelector.
+	setterToUse := aSetterSelector! !
 
 !MoveInstanceVariableRefactoring methodsFor: 'applying' stamp: 'mc 3/8/2023 00:50:38'!
 apply
@@ -1167,27 +1250,29 @@ compileSource: sourceCode on: aTargetClass
 		compile: sourceCode
 		classified: self class getterSetterCategoryName ! !
 
-!MoveInstanceVariableRefactoring methodsFor: 'private' stamp: 'mc 3/24/2023 00:44:36'!
+!MoveInstanceVariableRefactoring methodsFor: 'private' stamp: 'mc 11/7/2023 01:12:45'!
 createGetterOnTargetClass
 	^self 
-		compileSource: instVarNameSourceClass, String newLineString, String tab, '^', instVarNameSourceClass 
+		compileSource: getterToUse, String newLineString, String tab, '^', instVarNameSourceClass 
 		on: targetClass 
 ! !
 
-!MoveInstanceVariableRefactoring methodsFor: 'private' stamp: 'mc 3/24/2023 00:44:36'!
+!MoveInstanceVariableRefactoring methodsFor: 'private' stamp: 'mc 11/7/2023 22:51:52'!
 createSetterOnTargetClass
 	^self 
-		compileSource: instVarNameSourceClass, ': anObject', String newLineString, String tab, '^', instVarNameSourceClass, ' := anObject.' 
+		compileSource: setterToUse , ' anObject', String newLineString, String tab, '^', instVarNameSourceClass, ' := anObject.' 
 		on: targetClass.! !
 
-!MoveInstanceVariableRefactoring methodsFor: 'private' stamp: 'HAW 3/14/2023 12:24:15'!
+!MoveInstanceVariableRefactoring methodsFor: 'private' stamp: 'mc 11/7/2023 22:43:18'!
 replaceAccessInSourceClass
 	| newSource result |
 	self accessInSourceClass do: [ :aMethod | | replacer |
 		 replacer := CodeForNodeOnMethod 
 			replace: instVarNameSourceClass 
 			onMethod: aMethod 
-			accessingThrough: instVarNameTargetClass.
+			accessingThrough: instVarNameTargetClass
+			usingGetter: getterToUse
+			usingSetter: setterToUse .
 		result := replacer value.
 		newSource := result resultCode.
 		aMethod methodClass compile: newSource.
@@ -1195,10 +1280,10 @@ replaceAccessInSourceClass
 		modifiedWrites := modifiedWrites + result modifiedWrites.
 		]! !
 
-!MoveInstanceVariableRefactoring class methodsFor: 'error messages' stamp: 'mc 12/21/2022 02:26:20'!
-getterExistsOnTargetClassErrorMessage
+!MoveInstanceVariableRefactoring class methodsFor: 'error messages' stamp: 'mc 11/7/2023 23:55:01'!
+getterExistsOnTargetHierarchyErrorMessage
 
-	^ 'getter exists on target class'! !
+	^ 'getter exists on target hierarchy'! !
 
 !MoveInstanceVariableRefactoring class methodsFor: 'error messages' stamp: 'mc 12/22/2022 19:24:26'!
 instanceVariableExistsOnTargetHierarchyErrorMessage
@@ -1213,9 +1298,9 @@ instanceVariableToAccessThroughShouldExistOnSourceClassErrorMessage
 instanceVariableToMoveShouldExistOnSourceClassErrorMessage
 	^'instance variable does not exists on source class'.! !
 
-!MoveInstanceVariableRefactoring class methodsFor: 'error messages' stamp: 'mc 12/22/2022 19:21:15'!
-setterExistsOnTargetClassErrorMessage
-	^'setter exists on target class'! !
+!MoveInstanceVariableRefactoring class methodsFor: 'error messages' stamp: 'mc 11/7/2023 23:54:36'!
+setterExistsOnTargetHierarchyErrorMessage
+	^'setter exists on target hierarchy'! !
 
 !MoveInstanceVariableRefactoring class methodsFor: 'error messages' stamp: 'mc 1/12/2023 23:09:23'!
 souceClassAndTargetClassCanNotBeTheSameErrorMessage
@@ -1229,17 +1314,39 @@ targetClassCanNotBeSubClassOfSourceClassErrorMessage
 targetClassCanNotBeSuperClassOfSourceClassErrorMessage
 	^'Target class can not be super class of source class. Use push-up refactoring'! !
 
-!MoveInstanceVariableRefactoring class methodsFor: 'instance creation' stamp: 'mc 2/24/2023 09:25:42'!
+!MoveInstanceVariableRefactoring class methodsFor: 'instance creation' stamp: 'mc 11/7/2023 01:19:28'!
 named: instVarNameSourceClass from: sourceClass to: targetClass accessingThrough: instVarNameTargetClass 
+	^self 
+		named: instVarNameSourceClass
+		from: sourceClass
+		to: targetClass
+		accessingThrough: instVarNameTargetClass
+		usingGetter: instVarNameSourceClass asSymbol.! !
+
+!MoveInstanceVariableRefactoring class methodsFor: 'instance creation' stamp: 'mc 11/7/2023 22:54:18'!
+named: instVarNameSourceClass from: sourceClass to: targetClass accessingThrough: instVarNameTargetClass  usingGetter: aGetterSelector 
+
+	^self  
+		named: instVarNameSourceClass
+		from: sourceClass
+		to: targetClass
+		accessingThrough: instVarNameTargetClass
+		usingGetter: aGetterSelector 
+		usingSetter: (instVarNameSourceClass, ':') asSymbol ! !
+
+!MoveInstanceVariableRefactoring class methodsFor: 'instance creation' stamp: 'mc 11/7/2023 23:55:01'!
+named: instVarNameSourceClass from: sourceClass to: targetClass accessingThrough: instVarNameTargetClass  usingGetter: aGetterSelector usingSetter: aSetterSelector 
+
 	(sourceClass = targetClass) ifTrue: [ self refactoringError: self souceClassAndTargetClassCanNotBeTheSameErrorMessage ].
 	(targetClass allSubclasses includes: sourceClass) ifTrue: [ self refactoringError: self targetClassCanNotBeSuperClassOfSourceClassErrorMessage ].
 	(sourceClass allSubclasses includes: targetClass) ifTrue: [ self refactoringError: self targetClassCanNotBeSubClassOfSourceClassErrorMessage ].
-	(targetClass allSelectors includes: instVarNameSourceClass asSymbol) ifTrue: [ self refactoringError: self getterExistsOnTargetClassErrorMessage ].
+	(targetClass allSelectors includes: aGetterSelector) ifTrue: [ self refactoringError: self getterExistsOnTargetHierarchyErrorMessage ].
 	(targetClass allInstVarNamesEverywhere includes: instVarNameSourceClass) ifTrue: [ self refactoringError: self instanceVariableExistsOnTargetHierarchyErrorMessage ].
-	(targetClass allSelectors includes: (instVarNameSourceClass,':') asSymbol) ifTrue: [ self refactoringError: self setterExistsOnTargetClassErrorMessage ].
+	(targetClass allSelectors includes: aSetterSelector) ifTrue: [ self refactoringError: self setterExistsOnTargetHierarchyErrorMessage ].
 	(sourceClass instVarNames includes: instVarNameSourceClass) ifFalse: [ self refactoringError: self instanceVariableToMoveShouldExistOnSourceClassErrorMessage ].
 	(sourceClass allInstVarNames includes: instVarNameTargetClass) ifFalse: [ self refactoringError: self instanceVariableToAccessThroughShouldExistOnSourceClassErrorMessage ].
-	^self new initializeNamed: instVarNameSourceClass from: sourceClass to: targetClass in: instVarNameTargetClass .! !
+
+	^self new initializeNamed: instVarNameSourceClass from: sourceClass to: targetClass accessingThrough: instVarNameTargetClass usingGetter: aGetterSelector usingSetter: aSetterSelector ! !
 
 !MoveInstanceVariableRefactoring class methodsFor: 'category name' stamp: 'mc 3/24/2023 00:38:06'!
 getterSetterCategoryName
