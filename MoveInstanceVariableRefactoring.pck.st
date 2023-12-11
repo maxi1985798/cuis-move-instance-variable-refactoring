@@ -1,6 +1,6 @@
-'From Cuis 6.0 [latest update: #5981] on 8 November 2023 at 12:58:46 am'!
+'From Cuis 6.0 [latest update: #5981] on 11 December 2023 at 6:59:48 pm'!
 'Description '!
-!provides: 'MoveInstanceVariableRefactoring' 1 39!
+!provides: 'MoveInstanceVariableRefactoring' 1 42!
 SystemOrganization addCategory: 'MoveInstanceVariableRefactoring'!
 
 
@@ -42,6 +42,16 @@ TransferInstanceVariableApplier subclass: #MoveInstanceVariableApplier
 	category: 'MoveInstanceVariableRefactoring'!
 !classDefinition: 'MoveInstanceVariableApplier class' category: 'MoveInstanceVariableRefactoring'!
 MoveInstanceVariableApplier class
+	instanceVariableNames: ''!
+
+!classDefinition: #MoveInstanceVariableWithActualScopeApplier category: 'MoveInstanceVariableRefactoring'!
+MoveInstanceVariableApplier subclass: #MoveInstanceVariableWithActualScopeApplier
+	instanceVariableNames: ''
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'MoveInstanceVariableRefactoring'!
+!classDefinition: 'MoveInstanceVariableWithActualScopeApplier class' category: 'MoveInstanceVariableRefactoring'!
+MoveInstanceVariableWithActualScopeApplier class
 	instanceVariableNames: ''!
 
 !classDefinition: #CodeForNodeResult category: 'MoveInstanceVariableRefactoring'!
@@ -1352,25 +1362,14 @@ named: instVarNameSourceClass from: sourceClass to: targetClass accessingThrough
 getterSetterCategoryName
 	^'getter-setter'! !
 
-!MoveInstanceVariableApplier methodsFor: 'initialization' stamp: 'mc 2/21/2023 03:13:04'!
+!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 12/11/2023 18:21:30'!
 askTargetClassName
-	| targetClassNameTmp |
-	targetClassNameTmp := ClassNameRequestMorph request: 'Enter target class name:' initialAnswer: '' orCancel: requestExitBlock.
+	| targetClassNameTmp initialAnswer |
+	initialAnswer := self initialAnswerForInstanceVariable: accessingThroughinstanceVariableName in: classToRefactor.
+	targetClassNameTmp := ClassNameRequestMorph request: 'Enter target class name:' initialAnswer: initialAnswer orCancel: requestExitBlock.
 	"self halt."
 	targetClassNameTmp := targetClassNameTmp withoutSeparators.
 	targetClass := Smalltalk at: targetClassNameTmp asSymbol ifAbsent: [Refactoring refactoringErrorClass signal: 'Cant find the target class'].! !
-
-!MoveInstanceVariableApplier methodsFor: 'initialization' stamp: 'HAW 3/14/2023 12:20:16'!
-createRefactoring
-	^MoveInstanceVariableRefactoring 
-		named: instanceVariableName 
-		from: classToRefactor 
-		to: targetClass
-		accessingThrough: accessingThroughinstanceVariableName.! !
-
-!MoveInstanceVariableApplier methodsFor: 'initialization' stamp: 'mc 1/5/2023 18:23:52'!
-selectVariableLabel
-	^'Select variable to access through'! !
 
 !MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 2/3/2023 00:18:03'!
 chooseInstanceVariableToAccessThrough
@@ -1394,6 +1393,19 @@ chooseInstanceVariableToMove
 		
 	self endRequest ! !
 
+!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'HAW 3/14/2023 12:20:16'!
+createRefactoring
+	^MoveInstanceVariableRefactoring 
+		named: instanceVariableName 
+		from: classToRefactor 
+		to: targetClass
+		accessingThrough: accessingThroughinstanceVariableName.! !
+
+!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 12/11/2023 18:21:54'!
+initialAnswerForInstanceVariable: anAccessingThroughinstanceVariableName in: aSourceClass 
+	
+	^''! !
+
 !MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 2/7/2023 23:44:01'!
 requestRefactoringParameters
 
@@ -1412,9 +1424,33 @@ selectClassWichInstaceVariableIsDefined
 		Refactoring refactoringWarning: 'Instance variable ', instanceVariableName, ' is not defined on class ', classToRefactor name.
 		classToRefactor := classToRefactorWithIVDefined ]! !
 
+!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 1/5/2023 18:23:52'!
+selectVariableLabel
+	^'Select variable to access through'! !
+
 !MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 1/22/2023 02:08:37'!
 selectVariableToMoveLabel
 	^'Choose instance variable to move'! !
+
+!MoveInstanceVariableApplier class methodsFor: 'as yet unclassified' stamp: 'mc 12/11/2023 18:53:31'!
+initialize
+	(Smalltalk classNamed: #LiveTyping) ifNotNil: [
+		RefactoringApplier 
+			registerMoveInstanceVariableApplier: MoveInstanceVariableWithActualScopeApplier .
+	].! !
+
+!MoveInstanceVariableWithActualScopeApplier methodsFor: 'as yet unclassified' stamp: 'mc 12/11/2023 18:59:39'!
+initialAnswerForInstanceVariable: anAccessingThroughinstanceVariableName in: aSourceClass 
+	
+	| liveTypingTypes |
+	"self halt."
+	classToRefactor shouldLiveTypingBeDisabled 
+		ifTrue: [^'']
+		ifFalse: [
+			liveTypingTypes := classToRefactor typeInfoOfInstanceVariableNamed: accessingThroughinstanceVariableName ifAbsent: [^''].
+			((liveTypingTypes types includes: UndefinedObject) or: [liveTypingTypes types isEmpty]) ifTrue: [^''].
+			^liveTypingTypes commonSupertype name asString 
+		]! !
 
 !CodeForNodeResult methodsFor: 'as yet unclassified' stamp: 'mc 3/7/2023 01:58:49'!
 initielizeWith: newCode modifiedReads: anAmountOfModifiedReads modifiedWrites: anAmountOfModifiedWrites
@@ -1548,13 +1584,29 @@ moveInstanceVariable: aNodeUnderCursor in: aSelectedClass at: aMethodNode
 moveInstanceVariableOn: aBrowser at: aClassToRefactor
 	self moveInstanceVariableOn: aBrowser for: nil at: aClassToRefactor.! !
 
-!SmalltalkEditor methodsFor: '*MoveInstanceVariableRefactoring' stamp: 'mc 2/7/2023 23:57:11'!
+!SmalltalkEditor methodsFor: '*MoveInstanceVariableRefactoring' stamp: 'mc 12/11/2023 02:04:43'!
 moveInstanceVariableOn: aBrowser for: anInstanceVariableName at: aClassToRefactor
 	"self halt."
-	(MoveInstanceVariableApplier on: aBrowser for: anInstanceVariableName at: aClassToRefactor) value! !
+	(RefactoringApplier moveInstanceVariableApplier on: aBrowser for: anInstanceVariableName at: aClassToRefactor) value! !
 
-!BrowserWindow methodsFor: '*MoveInstanceVariableRefactoring' stamp: 'mc 2/3/2023 00:08:23'!
+!BrowserWindow methodsFor: '*MoveInstanceVariableRefactoring' stamp: 'mc 12/11/2023 02:06:42'!
 contextualMoveInstanceVariable
 "self halt."
 	model selectedClassOrMetaClass ifNotNil: [ :aClass |
-		(MoveInstanceVariableApplier on: model at: aClass ) value].! !
+		(RefactoringApplier moveInstanceVariableApplier on: model at: aClass ) value].! !
+
+!RefactoringApplier class methodsFor: '*MoveInstanceVariableRefactoring' stamp: 'mc 12/11/2023 01:54:26'!
+moveInstanceVariableApplier
+	"self halt."
+	^self applierAt: self moveInstanceVariableApplierId ifAbsent: [ MoveInstanceVariableApplier ]! !
+
+!RefactoringApplier class methodsFor: '*MoveInstanceVariableRefactoring' stamp: 'mc 12/11/2023 01:55:07'!
+moveInstanceVariableApplierId
+	
+	^#moveInstanceVariableApplier! !
+
+!RefactoringApplier class methodsFor: '*MoveInstanceVariableRefactoring' stamp: 'mc 12/11/2023 01:57:01'!
+registerMoveInstanceVariableApplier: aMoveInstanceVariableApplierClass
+
+	self registerApplierAt: self moveInstanceVariableApplierId with: aMoveInstanceVariableApplierClass! !
+MoveInstanceVariableApplier initialize!
