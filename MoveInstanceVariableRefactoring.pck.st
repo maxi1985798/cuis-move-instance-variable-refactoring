@@ -1,6 +1,6 @@
-'From Cuis 6.0 [latest update: #5981] on 11 December 2023 at 6:59:48 pm'!
+'From Cuis 6.0 [latest update: #5981] on 15 January 2024 at 1:11:10 am'!
 'Description '!
-!provides: 'MoveInstanceVariableRefactoring' 1 42!
+!provides: 'MoveInstanceVariableRefactoring' 1 43!
 SystemOrganization addCategory: 'MoveInstanceVariableRefactoring'!
 
 
@@ -1439,7 +1439,7 @@ initialize
 			registerMoveInstanceVariableApplier: MoveInstanceVariableWithActualScopeApplier .
 	].! !
 
-!MoveInstanceVariableWithActualScopeApplier methodsFor: 'as yet unclassified' stamp: 'mc 12/11/2023 18:59:39'!
+!MoveInstanceVariableWithActualScopeApplier methodsFor: 'as yet unclassified' stamp: 'mc 1/6/2024 03:35:50'!
 initialAnswerForInstanceVariable: anAccessingThroughinstanceVariableName in: aSourceClass 
 	
 	| liveTypingTypes |
@@ -1447,9 +1447,10 @@ initialAnswerForInstanceVariable: anAccessingThroughinstanceVariableName in: aSo
 	classToRefactor shouldLiveTypingBeDisabled 
 		ifTrue: [^'']
 		ifFalse: [
-			liveTypingTypes := classToRefactor typeInfoOfInstanceVariableNamed: accessingThroughinstanceVariableName ifAbsent: [^''].
-			((liveTypingTypes types includes: UndefinedObject) or: [liveTypingTypes types isEmpty]) ifTrue: [^''].
-			^liveTypingTypes commonSupertype name asString 
+			liveTypingTypes := classToRefactor commonSupertypeOfInstanceVariableNamed: accessingThroughinstanceVariableName ifNoTypes: [^''].
+			"((liveTypingTypes types includes: UndefinedObject) or: [liveTypingTypes types isEmpty]) ifTrue: [^''].
+			^liveTypingTypes commonSupertype name asString "
+			^liveTypingTypes name asString 
 		]! !
 
 !CodeForNodeResult methodsFor: 'as yet unclassified' stamp: 'mc 3/7/2023 01:58:49'!
