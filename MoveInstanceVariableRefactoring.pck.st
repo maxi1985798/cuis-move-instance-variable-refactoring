@@ -1,76 +1,76 @@
-'From Cuis 6.0 [latest update: #5981] on 15 January 2024 at 1:11:10 am'!
+'From Cuis6.3 [latest update: #6169] on 3 April 2024 at 10:54:11 pm'!
 'Description '!
-!provides: 'MoveInstanceVariableRefactoring' 1 43!
-SystemOrganization addCategory: 'MoveInstanceVariableRefactoring'!
+!provides: 'MoveInstanceVariableRefactoring' 1 44!
+SystemOrganization addCategory: #MoveInstanceVariableRefactoring!
 
 
-!classDefinition: #CodeForNodeOnMethod category: 'MoveInstanceVariableRefactoring'!
+!classDefinition: #CodeForNodeOnMethod category: #MoveInstanceVariableRefactoring!
 ParseNodeVisitor subclass: #CodeForNodeOnMethod
 	instanceVariableNames: 'node instanceVariableName compiledMethod intervalsToModify methodNode instVarNameTargetClass nodeInterval newCodeForNode nodeOffsetInSourceCode intervalsToReject modifiedReads modifiedWrites getterToUse setterToUse'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'MoveInstanceVariableRefactoring'!
-!classDefinition: 'CodeForNodeOnMethod class' category: 'MoveInstanceVariableRefactoring'!
+!classDefinition: 'CodeForNodeOnMethod class' category: #MoveInstanceVariableRefactoring!
 CodeForNodeOnMethod class
 	instanceVariableNames: ''!
 
-!classDefinition: #MoveInstanceVariableTest category: 'MoveInstanceVariableRefactoring'!
+!classDefinition: #MoveInstanceVariableTest category: #MoveInstanceVariableRefactoring!
 RefactoringTest subclass: #MoveInstanceVariableTest
 	instanceVariableNames: ''
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'MoveInstanceVariableRefactoring'!
-!classDefinition: 'MoveInstanceVariableTest class' category: 'MoveInstanceVariableRefactoring'!
+!classDefinition: 'MoveInstanceVariableTest class' category: #MoveInstanceVariableRefactoring!
 MoveInstanceVariableTest class
 	instanceVariableNames: ''!
 
-!classDefinition: #MoveInstanceVariableRefactoring category: 'MoveInstanceVariableRefactoring'!
+!classDefinition: #MoveInstanceVariableRefactoring category: #MoveInstanceVariableRefactoring!
 Refactoring subclass: #MoveInstanceVariableRefactoring
 	instanceVariableNames: 'instVarNameSourceClass sourceClass targetClass instVarNameTargetClass modifiedReads modifiedWrites getterToUse setterToUse'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'MoveInstanceVariableRefactoring'!
-!classDefinition: 'MoveInstanceVariableRefactoring class' category: 'MoveInstanceVariableRefactoring'!
+!classDefinition: 'MoveInstanceVariableRefactoring class' category: #MoveInstanceVariableRefactoring!
 MoveInstanceVariableRefactoring class
 	instanceVariableNames: ''!
 
-!classDefinition: #MoveInstanceVariableApplier category: 'MoveInstanceVariableRefactoring'!
+!classDefinition: #MoveInstanceVariableApplier category: #MoveInstanceVariableRefactoring!
 TransferInstanceVariableApplier subclass: #MoveInstanceVariableApplier
 	instanceVariableNames: 'accessingThroughinstanceVariableName targetClass'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'MoveInstanceVariableRefactoring'!
-!classDefinition: 'MoveInstanceVariableApplier class' category: 'MoveInstanceVariableRefactoring'!
+!classDefinition: 'MoveInstanceVariableApplier class' category: #MoveInstanceVariableRefactoring!
 MoveInstanceVariableApplier class
 	instanceVariableNames: ''!
 
-!classDefinition: #MoveInstanceVariableWithActualScopeApplier category: 'MoveInstanceVariableRefactoring'!
+!classDefinition: #MoveInstanceVariableWithActualScopeApplier category: #MoveInstanceVariableRefactoring!
 MoveInstanceVariableApplier subclass: #MoveInstanceVariableWithActualScopeApplier
 	instanceVariableNames: ''
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'MoveInstanceVariableRefactoring'!
-!classDefinition: 'MoveInstanceVariableWithActualScopeApplier class' category: 'MoveInstanceVariableRefactoring'!
+!classDefinition: 'MoveInstanceVariableWithActualScopeApplier class' category: #MoveInstanceVariableRefactoring!
 MoveInstanceVariableWithActualScopeApplier class
 	instanceVariableNames: ''!
 
-!classDefinition: #CodeForNodeResult category: 'MoveInstanceVariableRefactoring'!
+!classDefinition: #CodeForNodeResult category: #MoveInstanceVariableRefactoring!
 Object subclass: #CodeForNodeResult
 	instanceVariableNames: 'modifiedReads modifiedWrites resultCode'
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'MoveInstanceVariableRefactoring'!
-!classDefinition: 'CodeForNodeResult class' category: 'MoveInstanceVariableRefactoring'!
+!classDefinition: 'CodeForNodeResult class' category: #MoveInstanceVariableRefactoring!
 CodeForNodeResult class
 	instanceVariableNames: ''!
 
-!classDefinition: #TesisRefactoringMenu category: 'MoveInstanceVariableRefactoring'!
+!classDefinition: #TesisRefactoringMenu category: #MoveInstanceVariableRefactoring!
 Object subclass: #TesisRefactoringMenu
 	instanceVariableNames: ''
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'MoveInstanceVariableRefactoring'!
-!classDefinition: 'TesisRefactoringMenu class' category: 'MoveInstanceVariableRefactoring'!
+!classDefinition: 'TesisRefactoringMenu class' category: #MoveInstanceVariableRefactoring!
 TesisRefactoringMenu class
 	instanceVariableNames: ''!
 
@@ -267,7 +267,192 @@ replace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVa
 		usingSetter: aSetterToUse
 		rejectingIntervals: intervals! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 10/21/2022 17:51:06'!
+!MoveInstanceVariableTest methodsFor: 'validations' stamp: 'mc 11/7/2023 23:55:01'!
+test36_validation_getterMessageShouldntExistsOnTarget
+
+	| sourceClass targetClass |
+	
+	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2'.
+	sourceClass compile: 'methodReadsIv1
+^iv1'.
+	targetClass := self createClassNamed: #TargetClass.
+	targetClass compile: 'getterIv1
+^5'.
+	
+	self 
+		assertCreation: [MoveInstanceVariableRefactoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'  usingGetter: #getterIv1 usingSetter: #setterIv1:]
+		failsWith: [MoveInstanceVariableRefactoring getterExistsOnTargetHierarchyErrorMessage].
+	
+
+	! !
+
+!MoveInstanceVariableTest methodsFor: 'validations' stamp: 'mc 11/7/2023 23:55:01'!
+test37_validation_getterMessageShouldntExistsOnTarget
+
+	| sourceClass targetClass |
+	
+	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv3'.
+	sourceClass compile: 'methodReadsIv1
+^iv2'.
+	targetClass := self createClassNamed: #TargetClass.
+	targetClass compile: 'getterIv2
+^5'.
+	
+	self 
+		assertCreation: [MoveInstanceVariableRefactoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'  usingGetter: #getterIv2 usingSetter: #setterIv2:] 
+		failsWith: [MoveInstanceVariableRefactoring getterExistsOnTargetHierarchyErrorMessage].
+	
+
+	! !
+
+!MoveInstanceVariableTest methodsFor: 'validations' stamp: 'mc 11/7/2023 23:55:01'!
+test38_validation_getterMessageShouldntExistsOnTargetSuperclass
+
+	| sourceClass targetClass targetSuperClass |
+	
+	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv3'.
+	sourceClass compile: 'methodReadsIv1
+^iv2'.
+	targetSuperClass := self createClassNamed: #TargetSuperClass .
+	targetSuperClass compile: 'getterIv2
+^5'.	
+	targetClass := self createClassNamed: #TargetClass subclassOf: targetSuperClass.
+
+	self
+		assertCreation: [MoveInstanceVariableRefactoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'  usingGetter: #getterIv2 usingSetter: #setterIv2:] 
+		failsWith: [MoveInstanceVariableRefactoring getterExistsOnTargetHierarchyErrorMessage].
+	
+
+	! !
+
+!MoveInstanceVariableTest methodsFor: 'validations' stamp: 'HAW 3/14/2023 12:20:16'!
+test39_validation_instanceVariableShouldntExistsOnTarget
+
+	| sourceClass targetClass |
+	
+	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv3'.
+	targetClass := self createClassNamed: #TargetClass instanceVariableNames: 'iv2'.
+	
+	self
+		assertCreation: [MoveInstanceVariableRefactoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'] 
+		failsWith: [MoveInstanceVariableRefactoring instanceVariableExistsOnTargetHierarchyErrorMessage].
+	! !
+
+!MoveInstanceVariableTest methodsFor: 'validations' stamp: 'HAW 3/14/2023 12:20:16'!
+test40_validation_instanceVariableShouldntExistsOnTargetSubclass
+
+	| sourceClass targetClass |
+	
+	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv3'.
+	targetClass := self createClassNamed: #TargetClass.
+	self createClassNamed: #TargetSubClass subclassOf: targetClass instanceVariableNames: 'iv2'.
+	
+	self
+		assertCreation: [MoveInstanceVariableRefactoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'] 
+		failsWith: [MoveInstanceVariableRefactoring instanceVariableExistsOnTargetHierarchyErrorMessage].
+	
+
+	! !
+
+!MoveInstanceVariableTest methodsFor: 'validations' stamp: 'mc 11/7/2023 23:54:36'!
+test41_validation_setterMessageShouldntExistsOnTarget
+
+	| sourceClass targetClass |
+	
+	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2'.
+	sourceClass compile: 'methodWritesIv1
+^iv1 := 1'.
+	targetClass := self createClassNamed: #TargetClass.
+	targetClass compile: 'setterIv1: anObject
+^anObject + 5'.
+	
+	self
+		assertCreation: [MoveInstanceVariableRefactoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'  usingGetter: #getterIv1 usingSetter: #setterIv1:] 
+		failsWith: [MoveInstanceVariableRefactoring setterExistsOnTargetHierarchyErrorMessage].
+	
+
+	! !
+
+!MoveInstanceVariableTest methodsFor: 'validations' stamp: 'HAW 3/14/2023 12:20:16'!
+test42_instanceVariableToAccessThroughShouldExistsOnSourceHierarchy
+
+	| sourceClass targetClass sourceSuperClass refactoring |
+	
+	sourceSuperClass := self createClassNamed: #SourceSuperClass instanceVariableNames: 'iv2'.
+	sourceClass := self createClassNamed: #SourceClass subclassOf: sourceSuperClass instanceVariableNames: 'iv1'.
+	targetClass := self createClassNamed: #TargetClass.
+	
+	refactoring := MoveInstanceVariableRefactoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'.
+	refactoring apply.
+	
+	self deny: (sourceClass instVarNames includes: 'iv1').
+	self assert: (targetClass instVarNames includes: 'iv1').
+	! !
+
+!MoveInstanceVariableTest methodsFor: 'validations' stamp: 'HAW 3/14/2023 12:20:16'!
+test42_validation_instanceVariableToMoveShouldExistsOnSource
+
+	| sourceClass targetClass |
+	
+	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2'.
+	targetClass := self createClassNamed: #TargetClass.
+	
+	self
+		assertCreation: [MoveInstanceVariableRefactoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'] 
+		failsWith: [MoveInstanceVariableRefactoring instanceVariableToMoveShouldExistOnSourceClassErrorMessage].
+		! !
+
+!MoveInstanceVariableTest methodsFor: 'validations' stamp: 'HAW 3/14/2023 12:20:16'!
+test43_validation_instanceVariableToAccessThroughShouldExistsOnSource
+
+	| sourceClass targetClass |
+	
+	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv1'.
+	targetClass := self createClassNamed: #TargetClass.
+	
+	self
+		assertCreation: [MoveInstanceVariableRefactoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'] 
+		failsWith: [MoveInstanceVariableRefactoring instanceVariableToAccessThroughShouldExistOnSourceClassErrorMessage].
+		! !
+
+!MoveInstanceVariableTest methodsFor: 'validations' stamp: 'HAW 3/14/2023 12:20:16'!
+test44_validation_souceclassAndTargetClassCanNotBeTheSame
+
+	| sourceClass |
+	
+	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv3'.
+	
+	self
+		assertCreation: [MoveInstanceVariableRefactoring named: 'iv2' from: sourceClass to: sourceClass accessingThrough: 'iv3'] 
+		failsWith: [MoveInstanceVariableRefactoring souceClassAndTargetClassCanNotBeTheSameErrorMessage].
+		! !
+
+!MoveInstanceVariableTest methodsFor: 'validations' stamp: 'HAW 3/14/2023 12:20:16'!
+test45_validation_targetClassCanNotBeSuperClassOfSourceClass
+
+	| sourceClass targetClass |
+	
+	targetClass := self createClassNamed: #TargetSubClass.
+	sourceClass := self createClassNamed: #SourceClass subclassOf: targetClass instanceVariableNames: 'iv2 iv3'.
+	
+	self
+		assertCreation: [MoveInstanceVariableRefactoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'] 
+		failsWith: [MoveInstanceVariableRefactoring targetClassCanNotBeSuperClassOfSourceClassErrorMessage].! !
+
+!MoveInstanceVariableTest methodsFor: 'validations' stamp: 'HAW 3/14/2023 12:20:16'!
+test46_validation_targetClassCanNotBeSubClassOfSourceClass
+
+	| sourceClass targetClass |
+	
+	sourceClass := self createClassNamed: #SourceClass  instanceVariableNames: 'iv2 iv3'.
+	targetClass := self createClassNamed: #TargetSubClass subclassOf: sourceClass.
+	
+	self
+		assertCreation: [MoveInstanceVariableRefactoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'] 
+		failsWith: [MoveInstanceVariableRefactoring targetClassCanNotBeSubClassOfSourceClassErrorMessage].
+		! !
+
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 10/21/2022 17:51:06'!
 codeWithBadIdentation
 
 ^ 
@@ -277,7 +462,7 @@ iv6
 :=
 anObject.'! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 11/22/2022 03:08:32'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 11/22/2022 03:08:32'!
 expectedCodeWitBadIdentation
 
 ^
@@ -285,7 +470,7 @@ expectedCodeWitBadIdentation
 anObject
 iv2 iv6: anObject.'! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 10/23/2022 23:55:51'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 10/23/2022 23:55:51'!
 setterWithTwoAssignations
 
 ^ 
@@ -293,7 +478,7 @@ setterWithTwoAssignations
 iv6 := anObject.
 iv6 := anObject.'! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 10/23/2022 23:59:15'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 10/23/2022 23:59:15'!
 setterWithTwoAssignationsAfterRefactoring
 
 ^ 
@@ -301,7 +486,7 @@ setterWithTwoAssignationsAfterRefactoring
 iv2 iv6: anObject.
 iv2 iv6: anObject.'! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test01CanMoveInstVarWhenThereIsNoReferenceToSourceIV
 
 	| refactoring sourceClass targetClass |
@@ -316,7 +501,7 @@ test01CanMoveInstVarWhenThereIsNoReferenceToSourceIV
 	self assert: (targetClass instVarNames includes: 'iv1').
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 3/24/2023 00:48:13'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 3/24/2023 00:48:13'!
 test02CanMoveInstVarWhenThereIsAReferenceToSourceIV
 
 	| refactoring sourceClass targetClass |
@@ -336,7 +521,7 @@ test02CanMoveInstVarWhenThereIsAReferenceToSourceIV
 	self assert: #iv1 equals: (targetClass selectorsInCategory: MoveInstanceVariableRefactoring getterSetterCategoryName) first.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 11/6/2023 23:53:52'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 11/6/2023 23:53:52'!
 test02CanMoveInstVarWhenThereIsAReferenceToSourceIVAndUseADifferentGetterAsSelector
 
 	| refactoring sourceClass targetClass |
@@ -361,7 +546,7 @@ test02CanMoveInstVarWhenThereIsAReferenceToSourceIVAndUseADifferentGetterAsSelec
 	self assert: #iv1Getter equals: (targetClass selectorsInCategory: MoveInstanceVariableRefactoring getterSetterCategoryName) first.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test03CanMoveInstVarWhenThereIsAReferenceToSourceIV
 
 	| refactoring sourceClass targetClass |
@@ -378,7 +563,7 @@ test03CanMoveInstVarWhenThereIsAReferenceToSourceIV
 	
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test04MoveInstVarWithNoReferencesShouldNotCreateGetterOnTarget
 
 	| refactoring sourceClass targetClass targetMessages |
@@ -393,7 +578,7 @@ test04MoveInstVarWithNoReferencesShouldNotCreateGetterOnTarget
 	self deny: (targetMessages includes: #iv1).
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test05CanMoveInstVarWhenThereIsAReferenceToSourceIV
 
 	| refactoring sourceClass targetClass |
@@ -409,7 +594,7 @@ test05CanMoveInstVarWhenThereIsAReferenceToSourceIV
 	self assert: 'iv5 ^iv3 iv5' equals: (sourceClass compiledMethodAt: #iv5) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test06MoveInstVarWithNoReaderReferencesShouldNotCreateGetterOnTarget
 
 	| refactoring sourceClass targetClass targetMessages |
@@ -425,7 +610,7 @@ test06MoveInstVarWithNoReaderReferencesShouldNotCreateGetterOnTarget
 	self deny: (targetMessages includes: #iv1).
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test07CanMoveInstVarWhenThereAreTwoReferencesToSourceIV
 
 	| refactoring sourceClass targetClass |
@@ -443,7 +628,7 @@ test07CanMoveInstVarWhenThereAreTwoReferencesToSourceIV
 	self assert: 'secondRef ^iv2 iv5' equals: (sourceClass compiledMethodAt: #secondRef) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 3/24/2023 00:48:38'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 3/24/2023 00:48:38'!
 test08CanMoveInstVarWhenThereIsAWriteReferencesToSourceIV
 
 	| refactoring sourceClass targetClass |
@@ -465,7 +650,7 @@ test08CanMoveInstVarWhenThereIsAWriteReferencesToSourceIV
 	self assert: #iv5: equals: (targetClass selectorsInCategory: MoveInstanceVariableRefactoring getterSetterCategoryName) first.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test09CanMoveInstVarWhenThereIsAWriteReferencesToSourceIV
 
 	| refactoring sourceClass targetClass |
@@ -483,7 +668,7 @@ test09CanMoveInstVarWhenThereIsAWriteReferencesToSourceIV
 	self assert: 'iv6: anObject iv2 iv6: anObject.' equals: (sourceClass compiledMethodAt: #iv6:) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 11/7/2023 22:52:18'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 11/7/2023 22:52:18'!
 test09CanMoveInstVarWhenThereIsAWriteReferencesToSourceIVAndUseADifferentSetterName
 
 	| refactoring sourceClass targetClass |
@@ -508,7 +693,7 @@ test09CanMoveInstVarWhenThereIsAWriteReferencesToSourceIVAndUseADifferentSetterN
 	self assert: 'iv6: anObject iv2 iv6Setter: anObject.' equals: (sourceClass compiledMethodAt: #iv6:) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test10IdentationShouldNotBeAProblemToMoveInstVar
 
 	| refactoring sourceClass targetClass |
@@ -526,7 +711,7 @@ test10IdentationShouldNotBeAProblemToMoveInstVar
 	self assert: self expectedCodeWitBadIdentation equals: (sourceClass compiledMethodAt: #iv6:) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test11CanMoveInstVarWhenThereAreTwoAssignationsOnSameMethod
 
 	| refactoring sourceClass targetClass |
@@ -543,7 +728,7 @@ test11CanMoveInstVarWhenThereAreTwoAssignationsOnSameMethod
 	self assert: 'iv6: anObject', String newLineString, String tab, '^iv6 := anObject.' equals: (targetClass compiledMethodAt: #iv6:) sourceCode.
 	self assert: self setterWithTwoAssignationsAfterRefactoring equals: (sourceClass compiledMethodAt: #iv6:) sourceCode.! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test12CanMoveInstVarWhenThereAreTwoAssignationsOnSameMethod
 
 	| refactoring sourceClass targetClass |
@@ -571,7 +756,7 @@ iv2 iv6: tmpvar.' equals: (sourceClass compiledMethodAt: #iv6:) sourceCode.
 
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test13CanMoveInstVarWhenThereAreTwoReadReferencesToSourceIV
 
 	| refactoring sourceClass targetClass |
@@ -594,7 +779,7 @@ iv2 iv6.
 ^iv2 iv6' equals: (sourceClass compiledMethodAt: #iv6) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test14CanMoveInstVarWhenThereIsAReadReferencesInAssignation
 
 	| refactoring sourceClass targetClass |
@@ -615,7 +800,7 @@ tmp := iv2 iv6 byteAt: 2.
 ^tmp' equals: (sourceClass compiledMethodAt: #readOnAssign) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test15CanMoveInstVarWhenThereIsAMixedReferencesToSourceIV
 
 	| refactoring sourceClass targetClass |
@@ -638,7 +823,7 @@ test15CanMoveInstVarWhenThereIsAMixedReferencesToSourceIV
 	^iv3.' equals: (sourceClass compiledMethodAt: #iv1:) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test16CanMoveInstVarWhenThereIsAMixedReferencesToSourceIV
 
 	| refactoring sourceClass targetClass |
@@ -659,7 +844,7 @@ iv3 := 1.
 ^iv3.' equals: (sourceClass compiledMethodAt: #iv1:) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test17SubClassReadMethodsShouldBeRefactored
 
 	| refactoring sourceClass targetClass sourceSuperClass |
@@ -679,7 +864,7 @@ test17SubClassReadMethodsShouldBeRefactored
 
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test18SubClassWriteMethodsShouldBeRefactored
 
 	| refactoring sourceClass targetClass sourceSuperClass |
@@ -699,7 +884,7 @@ test18SubClassWriteMethodsShouldBeRefactored
 
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test19MixedMethodsShouldBeRefactored
 
 	| refactoring sourceClass targetClass |
@@ -720,7 +905,7 @@ iv2 iv5: 1.
 ^iv2 iv5' equals: (sourceClass compiledMethodAt: #iv5) sourceCode.
 ! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test20MixedMethodsShouldBeRefactored
 
 	| refactoring sourceClass targetClass |
@@ -745,7 +930,7 @@ iv2 iv5: 1.
 ^iv2 iv5' equals: (sourceClass compiledMethodAt: #iv5) sourceCode.
 ! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test21MixedMethodsShouldBeRefactoredInSubclass
 
 	| refactoring sourceClass targetClass sourceSuperClass |
@@ -770,7 +955,7 @@ iv2 iv5: 1.
 ^iv2 iv5' equals: (sourceClass compiledMethodAt: #iv5) sourceCode.
 ! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test22WriteMethodsWithSameBlockCodeShouldBeRefactored
 
 	| refactoring sourceClass targetClass |
@@ -790,7 +975,7 @@ iv2 iv6: anObject' equals: (sourceClass compiledMethodAt: #iv6:) sourceCode.
 iv2 iv6: anObject.' equals: (sourceClass compiledMethodAt: #iv66:) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test23MoveInstVarWithNoReadReferencesOnIVShouldNotCreateGetterOnTarget
 
 	| refactoring sourceClass targetClass targetMessages |
@@ -809,7 +994,7 @@ iv3 := 1.
 	self deny: (targetMessages includes: #iv1).
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test24CanMoveInstVarWhenThereIsAWriteReferencesAndKeywordMessage
 
 	| refactoring sourceClass targetClass |
@@ -833,7 +1018,7 @@ test24CanMoveInstVarWhenThereIsAWriteReferencesAndKeywordMessage
 	^iv3.' equals: (sourceClass compiledMethodAt: #iv1:) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test25ThereAreOnly2VersionsAfterRefactoringMethodWithTwoWriteReferences
 
 	| refactoring sourceClass targetClass |
@@ -847,7 +1032,7 @@ test25ThereAreOnly2VersionsAfterRefactoringMethodWithTwoWriteReferences
 	
 	self assert: 2 equals: (VersionsBrowser versionCountForSelector: #iv6: class: sourceClass).! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test26ThereAreOnly2VersionsAfterRefactoringMethodWithTwoReadReferences
 
 	| refactoring sourceClass targetClass |
@@ -866,7 +1051,7 @@ iv6.
 	self assert: 2 equals: (VersionsBrowser versionCountForSelector: #iv6 class: sourceClass).
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test27ThereAreOnly2VersionsAfterRefactoringMethodWithMixedReferences
 
 	| refactoring sourceClass targetClass |
@@ -885,7 +1070,7 @@ iv6 := 1.
 	self assert: 2 equals: (VersionsBrowser versionCountForSelector: #iv6 class: sourceClass).
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test28ParenthesisShouldBeUsedOnDoubleAssignation
 
 	| refactoring sourceClass targetClass |
@@ -904,7 +1089,7 @@ iv6 := tmp1 := 1.'.
 iv2 iv6: (tmp1 := 1).' equals: (sourceClass compiledMethodAt: #iv6) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test29ParenthesisShouldBeUsedOnDoubleAssignation
 
 	| refactoring sourceClass targetClass |
@@ -923,7 +1108,7 @@ iv6 := iv6 := 1.'.
 iv2 iv6: (iv2 iv6: 1).' equals: (sourceClass compiledMethodAt: #iv6) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test30ParenthesisShouldBeUsedOnDoubleAssignationAndCodeRepetition
 
 	| refactoring sourceClass targetClass |
@@ -948,7 +1133,7 @@ test30ParenthesisShouldBeUsedOnDoubleAssignationAndCodeRepetition
 	^tmp.' equals: (sourceClass compiledMethodAt: #iv6) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test31CodeRepeatedInClousureShouldBeRefactored_oneReadAccessVersion
 
 	| refactoring sourceClass targetClass |
@@ -971,7 +1156,7 @@ test31CodeRepeatedInClousureShouldBeRefactored_oneReadAccessVersion
 		]' equals: (sourceClass compiledMethodAt: #accessIv6) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test32CodeRepeatedInClousureShouldBeRefactored_twoReadAceessVersion
 
 	| refactoring sourceClass targetClass |
@@ -994,7 +1179,7 @@ test32CodeRepeatedInClousureShouldBeRefactored_twoReadAceessVersion
 		]' equals: (sourceClass compiledMethodAt: #accessIv1) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test33CodeRepeatedInClousureShouldBeRefactored_assingn
 
 	| refactoring sourceClass targetClass |
@@ -1017,7 +1202,7 @@ test33CodeRepeatedInClousureShouldBeRefactored_assingn
 		]' equals: (sourceClass compiledMethodAt: #accessIv1) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'HAW 3/14/2023 12:20:16'!
 test34CodeWithDiferentStructureInClousureShouldBeRefactored
 
 	| refactoring sourceClass targetClass |
@@ -1039,191 +1224,6 @@ test34CodeWithDiferentStructureInClousureShouldBeRefactored
 		iv2 iv1: [iv2 iv1: [iv2 iv1+iv2 iv1]]. 
 		]' equals: (sourceClass compiledMethodAt: #accessIv1) sourceCode.
 	! !
-
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 11/7/2023 23:55:01'!
-test36_validation_getterMessageShouldntExistsOnTarget
-
-	| sourceClass targetClass |
-	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2'.
-	sourceClass compile: 'methodReadsIv1
-^iv1'.
-	targetClass := self createClassNamed: #TargetClass.
-	targetClass compile: 'getterIv1
-^5'.
-	
-	self 
-		assertCreation: [MoveInstanceVariableRefactoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'  usingGetter: #getterIv1 usingSetter: #setterIv1:]
-		failsWith: [MoveInstanceVariableRefactoring getterExistsOnTargetHierarchyErrorMessage].
-	
-
-	! !
-
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 11/7/2023 23:55:01'!
-test37_validation_getterMessageShouldntExistsOnTarget
-
-	| sourceClass targetClass |
-	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv3'.
-	sourceClass compile: 'methodReadsIv1
-^iv2'.
-	targetClass := self createClassNamed: #TargetClass.
-	targetClass compile: 'getterIv2
-^5'.
-	
-	self 
-		assertCreation: [MoveInstanceVariableRefactoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'  usingGetter: #getterIv2 usingSetter: #setterIv2:] 
-		failsWith: [MoveInstanceVariableRefactoring getterExistsOnTargetHierarchyErrorMessage].
-	
-
-	! !
-
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 11/7/2023 23:55:01'!
-test38_validation_getterMessageShouldntExistsOnTargetSuperclass
-
-	| sourceClass targetClass targetSuperClass |
-	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv3'.
-	sourceClass compile: 'methodReadsIv1
-^iv2'.
-	targetSuperClass := self createClassNamed: #TargetSuperClass .
-	targetSuperClass compile: 'getterIv2
-^5'.	
-	targetClass := self createClassNamed: #TargetClass subclassOf: targetSuperClass.
-
-	self
-		assertCreation: [MoveInstanceVariableRefactoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'  usingGetter: #getterIv2 usingSetter: #setterIv2:] 
-		failsWith: [MoveInstanceVariableRefactoring getterExistsOnTargetHierarchyErrorMessage].
-	
-
-	! !
-
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
-test39_validation_instanceVariableShouldntExistsOnTarget
-
-	| sourceClass targetClass |
-	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv3'.
-	targetClass := self createClassNamed: #TargetClass instanceVariableNames: 'iv2'.
-	
-	self
-		assertCreation: [MoveInstanceVariableRefactoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'] 
-		failsWith: [MoveInstanceVariableRefactoring instanceVariableExistsOnTargetHierarchyErrorMessage].
-	! !
-
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
-test40_validation_instanceVariableShouldntExistsOnTargetSubclass
-
-	| sourceClass targetClass |
-	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv3'.
-	targetClass := self createClassNamed: #TargetClass.
-	self createClassNamed: #TargetSubClass subclassOf: targetClass instanceVariableNames: 'iv2'.
-	
-	self
-		assertCreation: [MoveInstanceVariableRefactoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'] 
-		failsWith: [MoveInstanceVariableRefactoring instanceVariableExistsOnTargetHierarchyErrorMessage].
-	
-
-	! !
-
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'mc 11/7/2023 23:54:36'!
-test41_validation_setterMessageShouldntExistsOnTarget
-
-	| sourceClass targetClass |
-	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2'.
-	sourceClass compile: 'methodWritesIv1
-^iv1 := 1'.
-	targetClass := self createClassNamed: #TargetClass.
-	targetClass compile: 'setterIv1: anObject
-^anObject + 5'.
-	
-	self
-		assertCreation: [MoveInstanceVariableRefactoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'  usingGetter: #getterIv1 usingSetter: #setterIv1:] 
-		failsWith: [MoveInstanceVariableRefactoring setterExistsOnTargetHierarchyErrorMessage].
-	
-
-	! !
-
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
-test42_instanceVariableToAccessThroughShouldExistsOnSourceHierarchy
-
-	| sourceClass targetClass sourceSuperClass refactoring |
-	
-	sourceSuperClass := self createClassNamed: #SourceSuperClass instanceVariableNames: 'iv2'.
-	sourceClass := self createClassNamed: #SourceClass subclassOf: sourceSuperClass instanceVariableNames: 'iv1'.
-	targetClass := self createClassNamed: #TargetClass.
-	
-	refactoring := MoveInstanceVariableRefactoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'.
-	refactoring apply.
-	
-	self deny: (sourceClass instVarNames includes: 'iv1').
-	self assert: (targetClass instVarNames includes: 'iv1').
-	! !
-
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
-test42_validation_instanceVariableToMoveShouldExistsOnSource
-
-	| sourceClass targetClass |
-	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2'.
-	targetClass := self createClassNamed: #TargetClass.
-	
-	self
-		assertCreation: [MoveInstanceVariableRefactoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'] 
-		failsWith: [MoveInstanceVariableRefactoring instanceVariableToMoveShouldExistOnSourceClassErrorMessage].
-		! !
-
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
-test43_validation_instanceVariableToAccessThroughShouldExistsOnSource
-
-	| sourceClass targetClass |
-	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv1'.
-	targetClass := self createClassNamed: #TargetClass.
-	
-	self
-		assertCreation: [MoveInstanceVariableRefactoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'] 
-		failsWith: [MoveInstanceVariableRefactoring instanceVariableToAccessThroughShouldExistOnSourceClassErrorMessage].
-		! !
-
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
-test44_validation_souceclassAndTargetClassCanNotBeTheSame
-
-	| sourceClass |
-	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv3'.
-	
-	self
-		assertCreation: [MoveInstanceVariableRefactoring named: 'iv2' from: sourceClass to: sourceClass accessingThrough: 'iv3'] 
-		failsWith: [MoveInstanceVariableRefactoring souceClassAndTargetClassCanNotBeTheSameErrorMessage].
-		! !
-
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
-test45_validation_targetClassCanNotBeSuperClassOfSourceClass
-
-	| sourceClass targetClass |
-	
-	targetClass := self createClassNamed: #TargetSubClass.
-	sourceClass := self createClassNamed: #SourceClass subclassOf: targetClass instanceVariableNames: 'iv2 iv3'.
-	
-	self
-		assertCreation: [MoveInstanceVariableRefactoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'] 
-		failsWith: [MoveInstanceVariableRefactoring targetClassCanNotBeSuperClassOfSourceClassErrorMessage].! !
-
-!MoveInstanceVariableTest methodsFor: 'as yet unclassified' stamp: 'HAW 3/14/2023 12:20:16'!
-test46_validation_targetClassCanNotBeSubClassOfSourceClass
-
-	| sourceClass targetClass |
-	
-	sourceClass := self createClassNamed: #SourceClass  instanceVariableNames: 'iv2 iv3'.
-	targetClass := self createClassNamed: #TargetSubClass subclassOf: sourceClass.
-	
-	self
-		assertCreation: [MoveInstanceVariableRefactoring named: 'iv2' from: sourceClass to: targetClass accessingThrough: 'iv3'] 
-		failsWith: [MoveInstanceVariableRefactoring targetClassCanNotBeSubClassOfSourceClassErrorMessage].
-		! !
 
 !MoveInstanceVariableRefactoring methodsFor: 'initialization' stamp: 'mc 11/7/2023 03:17:49'!
 initializeNamed: anInstVarNameSourceClass from: aSourceClass to: aTargetClass accessingThrough: anInstVarNameTargetClass usingGetter: aGetterSelector usingSetter: aSetterSelector 
