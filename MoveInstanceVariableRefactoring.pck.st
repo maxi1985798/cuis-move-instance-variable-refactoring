@@ -1,6 +1,6 @@
-'From Cuis6.3 [latest update: #6231] on 6 April 2024 at 2:22:05 am'!
+'From Cuis6.3 [latest update: #6231] on 22 April 2024 at 1:26:26 am'!
 'Description '!
-!provides: 'MoveInstanceVariableRefactoring' 1 45!
+!provides: 'MoveInstanceVariableRefactoring' 1 46!
 SystemOrganization addCategory: #MoveInstanceVariableRefactoring!
 
 
@@ -373,7 +373,7 @@ test41_validation_setterMessageShouldntExistsOnTarget
 
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'validations' stamp: 'mc 4/4/2024 01:39:10'!
+!MoveInstanceVariableTest methodsFor: 'validations' stamp: 'mc 4/21/2024 23:06:12'!
 test42_instanceVariableToAccessThroughShouldExistsOnSourceHierarchy
 
 	| sourceClass targetClass sourceSuperClass refactoring |
@@ -381,12 +381,27 @@ test42_instanceVariableToAccessThroughShouldExistsOnSourceHierarchy
 	sourceSuperClass := self createClassNamed: #SourceSuperClass instanceVariableNames: 'iv2'.
 	sourceClass := self createClassNamed: #SourceClass subclassOf: sourceSuperClass instanceVariableNames: 'iv1'.
 	targetClass := self createClassNamed: #TargetClass.
+	sourceClass compile: 'initializeIv2 iv2 := TargetClass new.' .
 	
 	refactoring := MoveInstanceVariableRefactoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'.
 	refactoring apply.
 	
 	self deny: (sourceClass instVarNames includes: 'iv1').
 	self assert: (targetClass instVarNames includes: 'iv1').
+	! !
+
+!MoveInstanceVariableTest methodsFor: 'validations' stamp: 'mc 4/21/2024 00:57:51'!
+test42_instanceVariableToAccessThroughShouldHaveOneAssignationAtLeast
+
+	| sourceClass targetClass |
+	
+	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2'.
+	targetClass := self createClassNamed: #TargetClass.
+	
+	self 
+		should: [ MoveInstanceVariableRefactoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'. ]  
+		raise: self refactoringWarning 
+		withMessageText: [MoveMethodRefactoring instanceVariableToAccessingThroughShouldHaveAtLeastOneAssignationErrorMessage: 'iv2'].
 	! !
 
 !MoveInstanceVariableTest methodsFor: 'validations' stamp: 'mc 4/4/2024 01:39:11'!
@@ -462,6 +477,20 @@ iv6
 :=
 anObject.'! !
 
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/21/2024 23:10:30'!
+createAnInitializedClassNamed: aSourceClassName instanceVariableNames: instanceVariables 
+	| sourceClass |
+	sourceClass := self createClassNamed: aSourceClassName instanceVariableNames: instanceVariables.
+	sourceClass compile: 'initializeIv2 iv2 := TargetClass new.' .
+	^sourceClass ! !
+
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/22/2024 01:04:39'!
+createAnInitializedClassNamed: aClassName subclassOf: sourceSuperClass 
+	| sourceClass |
+	sourceClass := self createClassNamed: aClassName subclassOf: sourceSuperClass.
+	sourceClass compile: 'initializeIv2 iv2 := TargetClass new.' .
+	^sourceClass ! !
+
 !MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:11'!
 expectedCodeWitBadIdentation
 
@@ -486,12 +515,12 @@ setterWithTwoAssignationsAfterRefactoring
 iv2 iv6: anObject.
 iv2 iv6: anObject.'! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:10'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/21/2024 23:09:16'!
 test01CanMoveInstVarWhenThereIsNoReferenceToSourceIV
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2'.
 	targetClass  := self createClassNamed: #TargetClass.
 	
 	refactoring := MoveInstanceVariableRefactoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'.
@@ -501,12 +530,12 @@ test01CanMoveInstVarWhenThereIsNoReferenceToSourceIV
 	self assert: (targetClass instVarNames includes: 'iv1').
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:11'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/21/2024 23:34:56'!
 test02CanMoveInstVarWhenThereIsAReferenceToSourceIV
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2'.
 	sourceClass compile: 'iv1 ^iv1' .
 	targetClass := self createClassNamed: #TargetClass.
 	
@@ -521,12 +550,12 @@ test02CanMoveInstVarWhenThereIsAReferenceToSourceIV
 	self assert: #iv1 equals: (targetClass selectorsInCategory: MoveInstanceVariableRefactoring getterSetterCategoryName) first.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:12'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/21/2024 23:35:05'!
 test02CanMoveInstVarWhenThereIsAReferenceToSourceIVAndUseADifferentGetterAsSelector
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2'.
 	targetClass := self createClassNamed: #TargetClass.
 	sourceClass compile: 'iv1 ^iv1' .
 	
@@ -546,12 +575,12 @@ test02CanMoveInstVarWhenThereIsAReferenceToSourceIVAndUseADifferentGetterAsSelec
 	self assert: #iv1Getter equals: (targetClass selectorsInCategory: MoveInstanceVariableRefactoring getterSetterCategoryName) first.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:10'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/21/2024 23:35:15'!
 test03CanMoveInstVarWhenThereIsAReferenceToSourceIV
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv5'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv2 iv5'.
 	sourceClass compile: 'iv5 ^iv5'.
 	targetClass := self createClassNamed: #TargetClass.
 	
@@ -563,12 +592,12 @@ test03CanMoveInstVarWhenThereIsAReferenceToSourceIV
 	
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:12'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/21/2024 23:35:30'!
 test04MoveInstVarWithNoReferencesShouldNotCreateGetterOnTarget
 
 	| refactoring sourceClass targetClass targetMessages |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2'.
 	targetClass := self createClassNamed: #TargetClass.
 	
 	refactoring := MoveInstanceVariableRefactoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'.
@@ -578,13 +607,14 @@ test04MoveInstVarWithNoReferencesShouldNotCreateGetterOnTarget
 	self deny: (targetMessages includes: #iv1).
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:10'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/21/2024 22:50:33'!
 test05CanMoveInstVarWhenThereIsAReferenceToSourceIV
 
 	| refactoring sourceClass targetClass |
 	
 	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv3 iv5'.
 	sourceClass compile: 'iv5 ^iv5'.
+	sourceClass compile: 'initializeIv3 iv3 := TargetClass new.' .
 	targetClass := self createClassNamed: #TargetClass.
 	
 	refactoring := MoveInstanceVariableRefactoring named: 'iv5' from: sourceClass to: targetClass accessingThrough: 'iv3'.
@@ -594,12 +624,12 @@ test05CanMoveInstVarWhenThereIsAReferenceToSourceIV
 	self assert: 'iv5 ^iv3 iv5' equals: (sourceClass compiledMethodAt: #iv5) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:12'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/21/2024 23:50:47'!
 test06MoveInstVarWithNoReaderReferencesShouldNotCreateGetterOnTarget
 
 	| refactoring sourceClass targetClass targetMessages |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2'.
 	sourceClass compile: 'iv1: anObject iv1 := anObject.'.
 	targetClass := self createClassNamed: #TargetClass.
 	
@@ -610,12 +640,12 @@ test06MoveInstVarWithNoReaderReferencesShouldNotCreateGetterOnTarget
 	self deny: (targetMessages includes: #iv1).
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:11'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/21/2024 23:50:54'!
 test07CanMoveInstVarWhenThereAreTwoReferencesToSourceIV
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv5'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv2 iv5'.
 	sourceClass compile: 'firstRef ^iv5'.
 	sourceClass compile: 'secondRef ^iv5'.
 	targetClass := self createClassNamed: #TargetClass.
@@ -628,12 +658,12 @@ test07CanMoveInstVarWhenThereAreTwoReferencesToSourceIV
 	self assert: 'secondRef ^iv2 iv5' equals: (sourceClass compiledMethodAt: #secondRef) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:10'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/21/2024 23:51:03'!
 test08CanMoveInstVarWhenThereIsAWriteReferencesToSourceIV
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv5'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv2 iv5'.
 	sourceClass compile: 'iv5: anObject iv5 := anObject.'.
 	targetClass := self createClassNamed: #TargetClass.
 	
@@ -650,12 +680,12 @@ test08CanMoveInstVarWhenThereIsAWriteReferencesToSourceIV
 	self assert: #iv5: equals: (targetClass selectorsInCategory: MoveInstanceVariableRefactoring getterSetterCategoryName) first.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:11'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/21/2024 23:51:09'!
 test09CanMoveInstVarWhenThereIsAWriteReferencesToSourceIV
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
 	sourceClass compile: 'iv6: anObject iv6 := anObject.'.
 	targetClass := self createClassNamed: #TargetClass.
 	
@@ -668,12 +698,12 @@ test09CanMoveInstVarWhenThereIsAWriteReferencesToSourceIV
 	self assert: 'iv6: anObject iv2 iv6: anObject.' equals: (sourceClass compiledMethodAt: #iv6:) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:10'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/21/2024 23:51:16'!
 test09CanMoveInstVarWhenThereIsAWriteReferencesToSourceIVAndUseADifferentSetterName
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
 	sourceClass compile: 'iv6: anObject iv6 := anObject.'.
 	targetClass := self createClassNamed: #TargetClass.
 	
@@ -693,12 +723,12 @@ test09CanMoveInstVarWhenThereIsAWriteReferencesToSourceIVAndUseADifferentSetterN
 	self assert: 'iv6: anObject iv2 iv6Setter: anObject.' equals: (sourceClass compiledMethodAt: #iv6:) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:10'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/21/2024 23:51:24'!
 test10IdentationShouldNotBeAProblemToMoveInstVar
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
 	sourceClass compile: self codeWithBadIdentation.
 	targetClass := self createClassNamed: #TargetClass.
 	
@@ -711,12 +741,12 @@ test10IdentationShouldNotBeAProblemToMoveInstVar
 	self assert: self expectedCodeWitBadIdentation equals: (sourceClass compiledMethodAt: #iv6:) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:11'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/22/2024 00:00:26'!
 test11CanMoveInstVarWhenThereAreTwoAssignationsOnSameMethod
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
 	sourceClass compile: self setterWithTwoAssignations.
 	targetClass := self createClassNamed: #TargetClass.
 	
@@ -728,12 +758,12 @@ test11CanMoveInstVarWhenThereAreTwoAssignationsOnSameMethod
 	self assert: 'iv6: anObject', String newLineString, String tab, '^iv6 := anObject.' equals: (targetClass compiledMethodAt: #iv6:) sourceCode.
 	self assert: self setterWithTwoAssignationsAfterRefactoring equals: (sourceClass compiledMethodAt: #iv6:) sourceCode.! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:12'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/22/2024 00:00:37'!
 test12CanMoveInstVarWhenThereAreTwoAssignationsOnSameMethod
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
 	sourceClass compile:  
 'iv6: anObject
 |tmpvar|
@@ -756,12 +786,12 @@ iv2 iv6: tmpvar.' equals: (sourceClass compiledMethodAt: #iv6:) sourceCode.
 
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:11'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/22/2024 00:00:45'!
 test13CanMoveInstVarWhenThereAreTwoReadReferencesToSourceIV
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
 	sourceClass compile: 'iv6
 |iiiiiiv6|
 iiiiiiv6 := 1.
@@ -779,12 +809,12 @@ iv2 iv6.
 ^iv2 iv6' equals: (sourceClass compiledMethodAt: #iv6) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:12'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/22/2024 00:00:54'!
 test14CanMoveInstVarWhenThereIsAReadReferencesInAssignation
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
 	sourceClass compile: 'readOnAssign
 |tmp|
 tmp := iv6 byteAt: 2.
@@ -800,12 +830,12 @@ tmp := iv2 iv6 byteAt: 2.
 ^tmp' equals: (sourceClass compiledMethodAt: #readOnAssign) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:11'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/22/2024 01:03:04'!
 test15CanMoveInstVarWhenThereIsAMixedReferencesToSourceIV
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2 iv3'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2 iv3'.
 	sourceClass compile: 'iv1: anObject
 	iv1 := iv3 byteAt: 2.
 	iv1 := iv1 + 1.
@@ -823,12 +853,12 @@ test15CanMoveInstVarWhenThereIsAMixedReferencesToSourceIV
 	^iv3.' equals: (sourceClass compiledMethodAt: #iv1:) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:12'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/22/2024 01:03:10'!
 test16CanMoveInstVarWhenThereIsAMixedReferencesToSourceIV
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2 iv3'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2 iv3'.
 	sourceClass compile: 'iv1: anObject
 iv1 := iv1 + 1.
 iv3 := 1.
@@ -844,12 +874,12 @@ iv3 := 1.
 ^iv3.' equals: (sourceClass compiledMethodAt: #iv1:) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:11'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/22/2024 01:03:30'!
 test17SubClassReadMethodsShouldBeRefactored
 
 	| refactoring sourceClass targetClass sourceSuperClass |
 	sourceSuperClass := self createClassNamed: #SourceSuperClass instanceVariableNames:'iv6 iv2'.
-	sourceClass := self createClassNamed: #SourceClass subclassOf: sourceSuperClass.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass subclassOf: sourceSuperClass.
 	sourceClass compile: 'iv6
 	^iv6'.
 	sourceSuperClass compile: 'iv6
@@ -864,12 +894,12 @@ test17SubClassReadMethodsShouldBeRefactored
 
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:12'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/22/2024 01:05:04'!
 test18SubClassWriteMethodsShouldBeRefactored
 
 	| refactoring sourceClass targetClass sourceSuperClass |
 	sourceSuperClass := self createClassNamed: #SourceSuperClass instanceVariableNames:'iv6 iv2'.
-	sourceClass := self createClassNamed: #SourceClass subclassOf: sourceSuperClass.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass subclassOf: sourceSuperClass.
 	sourceClass compile: 'iv6: anObject
 	iv6 := anObject'.
 	sourceSuperClass compile: 'iv6: anObject
@@ -884,12 +914,12 @@ test18SubClassWriteMethodsShouldBeRefactored
 
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:11'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/22/2024 01:05:12'!
 test19MixedMethodsShouldBeRefactored
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv5'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv2 iv5'.
 	sourceClass compile: 'iv5
 iv5 := 1.
 ^iv5'.
@@ -905,12 +935,12 @@ iv2 iv5: 1.
 ^iv2 iv5' equals: (sourceClass compiledMethodAt: #iv5) sourceCode.
 ! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:10'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/22/2024 01:05:18'!
 test20MixedMethodsShouldBeRefactored
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv5'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv2 iv5'.
 	sourceClass compile: 'iv5
 | tmp1 |
 tmp1 := 1.
@@ -930,12 +960,12 @@ iv2 iv5: 1.
 ^iv2 iv5' equals: (sourceClass compiledMethodAt: #iv5) sourceCode.
 ! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:10'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/22/2024 01:06:02'!
 test21MixedMethodsShouldBeRefactoredInSubclass
 
 	| refactoring sourceClass targetClass sourceSuperClass |
 	sourceSuperClass := self createClassNamed: #SourceSuperClass instanceVariableNames:'iv2 iv5'.
-	sourceClass := self createClassNamed: #SourceClass subclassOf: sourceSuperClass.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass subclassOf: sourceSuperClass.
 	sourceClass compile: 'iv5
 | tmp1 |
 tmp1 := 1.
@@ -955,11 +985,11 @@ iv2 iv5: 1.
 ^iv2 iv5' equals: (sourceClass compiledMethodAt: #iv5) sourceCode.
 ! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:12'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/22/2024 01:06:09'!
 test22WriteMethodsWithSameBlockCodeShouldBeRefactored
 
 	| refactoring sourceClass targetClass |
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames:'iv6 iv2 iv1'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames:'iv6 iv2 iv1'.
 	sourceClass compile: 'iv6: anObject
 iv6 := anObject'.
 	sourceClass compile: 'iv66: anObject
@@ -975,12 +1005,12 @@ iv2 iv6: anObject' equals: (sourceClass compiledMethodAt: #iv6:) sourceCode.
 iv2 iv6: anObject.' equals: (sourceClass compiledMethodAt: #iv66:) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:12'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/22/2024 01:06:16'!
 test23MoveInstVarWithNoReadReferencesOnIVShouldNotCreateGetterOnTarget
 
 	| refactoring sourceClass targetClass targetMessages |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2 iv3'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2 iv3'.
 	targetClass := self createClassNamed: #TargetClass.
 	sourceClass compile: 'iv1: anObject
 iv1 := anObject.
@@ -994,12 +1024,12 @@ iv3 := 1.
 	self deny: (targetMessages includes: #iv1).
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:12'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/22/2024 01:06:22'!
 test24CanMoveInstVarWhenThereIsAWriteReferencesAndKeywordMessage
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2 iv3'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2 iv3'.
 	sourceClass compile:  
 'iv1: anObject
 	iv1 := iv3 byteAt: 2.
@@ -1018,12 +1048,12 @@ test24CanMoveInstVarWhenThereIsAWriteReferencesAndKeywordMessage
 	^iv3.' equals: (sourceClass compiledMethodAt: #iv1:) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:12'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/22/2024 01:06:31'!
 test25ThereAreOnly2VersionsAfterRefactoringMethodWithTwoWriteReferences
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
 	sourceClass compile: self setterWithTwoAssignations.
 	targetClass := self createClassNamed: #TargetClass.
 	
@@ -1032,12 +1062,12 @@ test25ThereAreOnly2VersionsAfterRefactoringMethodWithTwoWriteReferences
 	
 	self assert: 2 equals: (VersionsBrowser versionCountForSelector: #iv6: class: sourceClass).! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:12'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/22/2024 01:06:37'!
 test26ThereAreOnly2VersionsAfterRefactoringMethodWithTwoReadReferences
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
 	sourceClass compile: 'iv6
 |iiiiiiv6|
 iiiiiiv6 := 1.
@@ -1051,12 +1081,12 @@ iv6.
 	self assert: 2 equals: (VersionsBrowser versionCountForSelector: #iv6 class: sourceClass).
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:10'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/22/2024 01:06:43'!
 test27ThereAreOnly2VersionsAfterRefactoringMethodWithMixedReferences
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
 	sourceClass compile: 'iv6
 | tmp1 |
 tmp1 := 1.
@@ -1070,12 +1100,12 @@ iv6 := 1.
 	self assert: 2 equals: (VersionsBrowser versionCountForSelector: #iv6 class: sourceClass).
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:12'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/22/2024 01:06:49'!
 test28ParenthesisShouldBeUsedOnDoubleAssignation
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
 	sourceClass compile: 'iv6
 | tmp1 |
 iv6 := tmp1 := 1.'.
@@ -1089,12 +1119,12 @@ iv6 := tmp1 := 1.'.
 iv2 iv6: (tmp1 := 1).' equals: (sourceClass compiledMethodAt: #iv6) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:12'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/22/2024 01:06:55'!
 test29ParenthesisShouldBeUsedOnDoubleAssignation
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
 	sourceClass compile: 'iv6
 | tmp1 |
 iv6 := iv6 := 1.'.
@@ -1108,12 +1138,12 @@ iv6 := iv6 := 1.'.
 iv2 iv6: (iv2 iv6: 1).' equals: (sourceClass compiledMethodAt: #iv6) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:10'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/22/2024 01:07:02'!
 test30ParenthesisShouldBeUsedOnDoubleAssignationAndCodeRepetition
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
 	sourceClass compile: 'iv6
 	| tmp1 |
 	tmp := 1.
@@ -1133,12 +1163,12 @@ test30ParenthesisShouldBeUsedOnDoubleAssignationAndCodeRepetition
 	^tmp.' equals: (sourceClass compiledMethodAt: #iv6) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:12'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/22/2024 01:07:09'!
 test31CodeRepeatedInClousureShouldBeRefactored_oneReadAccessVersion
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv2 iv6'.
 	sourceClass compile: 'accessIv6
 	iv6 _ [
 		iv6 _ [iv6+ 1]. 
@@ -1156,12 +1186,12 @@ test31CodeRepeatedInClousureShouldBeRefactored_oneReadAccessVersion
 		]' equals: (sourceClass compiledMethodAt: #accessIv6) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:10'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/22/2024 01:07:15'!
 test32CodeRepeatedInClousureShouldBeRefactored_twoReadAceessVersion
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2'.
 	sourceClass compile: 'accessIv1
 	iv1 _ [
 		iv1 _ [iv1 + iv1]. 
@@ -1179,12 +1209,12 @@ test32CodeRepeatedInClousureShouldBeRefactored_twoReadAceessVersion
 		]' equals: (sourceClass compiledMethodAt: #accessIv1) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:12'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/22/2024 01:07:21'!
 test33CodeRepeatedInClousureShouldBeRefactored_assingn
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2'.
 	sourceClass compile: 'accessIv1
 	iv1 _ [
 		iv1 _ [iv1 + iv1]. 
@@ -1202,12 +1232,12 @@ test33CodeRepeatedInClousureShouldBeRefactored_assingn
 		]' equals: (sourceClass compiledMethodAt: #accessIv1) sourceCode.
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/4/2024 01:39:12'!
+!MoveInstanceVariableTest methodsFor: 'tests' stamp: 'mc 4/22/2024 01:07:27'!
 test34CodeWithDiferentStructureInClousureShouldBeRefactored
 
 	| refactoring sourceClass targetClass |
 	
-	sourceClass := self createClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2'.
+	sourceClass := self createAnInitializedClassNamed: #SourceClass instanceVariableNames: 'iv1 iv2'.
 	sourceClass compile: 'accessIv1
 	iv1 _ [
 		iv1 _ [iv1   +   iv1].
@@ -1304,6 +1334,10 @@ instanceVariableExistsOnTargetHierarchyErrorMessage
 instanceVariableToAccessThroughShouldExistOnSourceClassErrorMessage
 	^'instance variable to access through does not exists on source class'.! !
 
+!MoveInstanceVariableRefactoring class methodsFor: 'error messages' stamp: 'mc 4/21/2024 01:03:03'!
+instanceVariableToAccessingThroughShouldHaveAtLeastOneAssignationErrorMessage: instanceVariableName
+	^'Instance variable ', instanceVariableName, ' should have at least one assignation'! !
+
 !MoveInstanceVariableRefactoring class methodsFor: 'error messages' stamp: 'mc 4/4/2024 01:39:10'!
 instanceVariableToMoveShouldExistOnSourceClassErrorMessage
 	^'instance variable does not exists on source class'.! !
@@ -1323,6 +1357,15 @@ targetClassCanNotBeSubClassOfSourceClassErrorMessage
 !MoveInstanceVariableRefactoring class methodsFor: 'error messages' stamp: 'mc 4/4/2024 01:39:10'!
 targetClassCanNotBeSuperClassOfSourceClassErrorMessage
 	^'Target class can not be super class of source class. Use push-up refactoring'! !
+
+!MoveInstanceVariableRefactoring class methodsFor: 'instance creation' stamp: 'mc 4/21/2024 01:02:05'!
+existsAssignationOf: instanceVariable inHierarchyOf: sourceClass 
+	| existsAssignation |
+	existsAssignation := false.
+	sourceClass withAllSuperAndSubclassesDoGently: [ :aClassInSourceHierachy |  
+		existsAssignation := existsAssignation or: [(aClassInSourceHierachy whichSelectorsStoreInto: instanceVariable) notEmpty] 
+	].
+	^existsAssignation.! !
 
 !MoveInstanceVariableRefactoring class methodsFor: 'instance creation' stamp: 'mc 4/4/2024 01:39:10'!
 named: instVarNameSourceClass from: sourceClass to: targetClass accessingThrough: instVarNameTargetClass 
@@ -1344,7 +1387,7 @@ named: instVarNameSourceClass from: sourceClass to: targetClass accessingThrough
 		usingGetter: aGetterSelector 
 		usingSetter: (instVarNameSourceClass, ':') asSymbol ! !
 
-!MoveInstanceVariableRefactoring class methodsFor: 'instance creation' stamp: 'mc 4/4/2024 01:39:10'!
+!MoveInstanceVariableRefactoring class methodsFor: 'instance creation' stamp: 'mc 4/21/2024 00:59:41'!
 named: instVarNameSourceClass from: sourceClass to: targetClass accessingThrough: instVarNameTargetClass  usingGetter: aGetterSelector usingSetter: aSetterSelector 
 
 	(sourceClass = targetClass) ifTrue: [ self refactoringError: self souceClassAndTargetClassCanNotBeTheSameErrorMessage ].
@@ -1355,7 +1398,8 @@ named: instVarNameSourceClass from: sourceClass to: targetClass accessingThrough
 	(targetClass allSelectors includes: aSetterSelector) ifTrue: [ self refactoringError: self setterExistsOnTargetHierarchyErrorMessage ].
 	(sourceClass instVarNames includes: instVarNameSourceClass) ifFalse: [ self refactoringError: self instanceVariableToMoveShouldExistOnSourceClassErrorMessage ].
 	(sourceClass allInstVarNames includes: instVarNameTargetClass) ifFalse: [ self refactoringError: self instanceVariableToAccessThroughShouldExistOnSourceClassErrorMessage ].
-
+	
+	(self existsAssignationOf: instVarNameTargetClass inHierarchyOf: sourceClass ) ifFalse: [ self refactoringWarning: (self instanceVariableToAccessingThroughShouldHaveAtLeastOneAssignationErrorMessage: instVarNameTargetClass) ].
 	^self new initializeNamed: instVarNameSourceClass from: sourceClass to: targetClass accessingThrough: instVarNameTargetClass usingGetter: aGetterSelector usingSetter: aSetterSelector ! !
 
 !MoveInstanceVariableRefactoring class methodsFor: 'category name' stamp: 'mc 4/4/2024 01:39:10'!
