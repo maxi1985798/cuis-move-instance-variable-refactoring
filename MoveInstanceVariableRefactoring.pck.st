@@ -1,6 +1,6 @@
-'From Cuis6.3 [latest update: #6231] on 22 April 2024 at 1:26:26 am'!
+'From Cuis6.3 [latest update: #6169] on 28 April 2024 at 10:26:30 pm'!
 'Description '!
-!provides: 'MoveInstanceVariableRefactoring' 1 46!
+!provides: 'MoveInstanceVariableRefactoring' 1 47!
 SystemOrganization addCategory: #MoveInstanceVariableRefactoring!
 
 
@@ -95,7 +95,7 @@ initializeFor: aNode replace: instVarNameToReplace onMethod: aCompiledMethod acc
 	getterToUse := aGetterToUse .
 	setterToUse := aSetterToUse ! !
 
-!CodeForNodeOnMethod methodsFor: 'visiting' stamp: 'mc 4/4/2024 01:39:09'!
+!CodeForNodeOnMethod methodsFor: 'visiting' stamp: 'mc 4/28/2024 19:17:15'!
 visitAssignmentNode: anAssignmentNode 
 	| rangesOfassigmentNode assigmentValue newAssignmentCode newCodeForValue nodeReplacer resultForValue |
 
@@ -112,7 +112,7 @@ visitAssignmentNode: anAssignmentNode
 					rejectingIntervals: intervalsToReject.
 	resultForValue :=			nodeReplacer value.
 	newCodeForValue := resultForValue resultCode .
-	(((anAssignmentNode value isMessageNode and: [anAssignmentNode value isKeywordMessageSend])) or: [anAssignmentNode value isAssignmentNode ])
+	(self shouldAddParenthesisOnValueOf: anAssignmentNode)
 		ifTrue: [assigmentValue := '(', newCodeForValue, ')'.] 
 		ifFalse: [assigmentValue := newCodeForValue.].
 	newAssignmentCode := instVarNameTargetClass, ' ', setterToUse, ' ', assigmentValue.
@@ -208,6 +208,11 @@ registerInterval: anIntervalToModify withModification: sourceCodeForInterval
 removeSeenRanges: rangesOfNode
 
 	^ rangesOfNode removeAllSuchThat: [ :aSourceInterval | intervalsToReject anySatisfy: [ :aSourceIntervalToModify | aSourceIntervalToModify includesAllOf: aSourceInterval ] ]! !
+
+!CodeForNodeOnMethod methodsFor: 'private' stamp: 'mc 4/28/2024 19:17:15'!
+shouldAddParenthesisOnValueOf: anAssignmentNode
+
+	^ ((anAssignmentNode value isMessageNode and: [anAssignmentNode value isKeywordMessageSend])) or: [anAssignmentNode value isAssignmentNode ]! !
 
 !CodeForNodeOnMethod methodsFor: 'private' stamp: 'mc 4/4/2024 01:39:09'!
 sourceRangesOf: aNode
