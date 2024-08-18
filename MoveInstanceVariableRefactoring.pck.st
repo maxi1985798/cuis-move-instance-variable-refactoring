@@ -1,6 +1,6 @@
-'From Cuis6.3 [latest update: #6350] on 17 June 2024 at 7:27:56 pm'!
-'Description '!
-!provides: 'MoveInstanceVariableRefactoring' 1 48!
+'From Cuis7.1 [latest update: #6578] on 10 August 2024 at 10:06:26 pm'!
+'Description Udated to Cuis 7.1'!
+!provides: 'MoveInstanceVariableRefactoring' 1 50!
 SystemOrganization addCategory: #MoveInstanceVariableRefactoring!
 
 
@@ -1363,11 +1363,11 @@ targetClassCanNotBeSubClassOfSourceClassErrorMessage
 targetClassCanNotBeSuperClassOfSourceClassErrorMessage
 	^'Target class can not be super class of source class. Use push-up refactoring'! !
 
-!MoveInstanceVariableRefactoring class methodsFor: 'instance creation' stamp: 'mc 4/21/2024 01:02:05'!
+!MoveInstanceVariableRefactoring class methodsFor: 'instance creation' stamp: 'HAW 8/10/2024 20:54:26'!
 existsAssignationOf: instanceVariable inHierarchyOf: sourceClass 
 	| existsAssignation |
 	existsAssignation := false.
-	sourceClass withAllSuperAndSubclassesDoGently: [ :aClassInSourceHierachy |  
+	sourceClass withAllSuperAndSubclassesDo: [ :aClassInSourceHierachy |  
 		existsAssignation := existsAssignation or: [(aClassInSourceHierachy whichSelectorsStoreInto: instanceVariable) notEmpty] 
 	].
 	^existsAssignation.! !
@@ -1519,43 +1519,37 @@ resultCode
 newWith: newCode modifiedReads: modifiedReads modifiedWrites: modifiedWrites
 	^self new initielizeWith: newCode modifiedReads: modifiedReads modifiedWrites: modifiedWrites! !
 
-!TesisRefactoringMenu class methodsFor: 'as yet unclassified' stamp: 'mc 4/4/2024 01:39:12'!
-classListMenuOptions
-
-	^ `{	
-			{
-				#submenuOf -> RefactoringMenues refactoringsLabel.
-				#itemGroup 		-> 		20.
-				#itemOrder 		-> 		70.
-				#label 			-> 		'move inst var...'.
-				#selector 		-> 		#contextualMoveInstanceVariable.
-				#icon 			-> 		#saveAsIcon
-			} asDictionary.			
-	}`.
-	! !
-
-!TesisRefactoringMenu class methodsFor: 'as yet unclassified' stamp: 'mc 4/4/2024 01:39:12'!
-smalltalkEditorCmdShortcutsSpec
+!TesisRefactoringMenu class methodsFor: 'menu & kbd shortcuts' stamp: 'jmv 7/30/2024 14:42:22'!
+classListMenuSpec
 	"
-	SmalltalkEditor initializeCmdShortcuts
+	BrowserWindow at: #classListMenuSpec registerMenuAndShortcutsSpecProvider:
+		(MessageSend receiver: TesisRefactoringMenu selector: #classListMenuSpec).
+	Do this in TesisRefactoringMenu class >> initialize
 	"
 	^#(
-		#($Y	#contextualMoveInstanceVariable:						'Move instance variable what is under cursor')
+		#(1081		'move inst var...' 					nil 		window 			contextualMoveInstanceVariable 						saveAsIcon)
 	)! !
 
-!TesisRefactoringMenu class methodsFor: 'as yet unclassified' stamp: 'mc 4/4/2024 01:39:12'!
-smalltalkEditorMenuOptions
+!TesisRefactoringMenu class methodsFor: 'menu & kbd shortcuts' stamp: 'jmv 7/30/2024 14:52:32'!
+smalltalkEditorMenuSpec
+	"
+	BrowserWindow at: #SmalltalkEditor registerMenuAndShortcutsSpecProvider:
+		(MessageSend receiver: TesisRefactoringMenu selector: #smalltalkEditorMenuSpec).
+	Do this in TesisRefactoringMenu class >> initialize
+	"
+	^#(
+		#(2160		'Move Instance Variable' 					$Y 		editor 			contextualMoveInstanceVariable
+				saveAsIcon							'Move instance variable what is under cursor')
+	)! !
 
-	^`{
-		{
-				#submenuOf -> RefactoringMenues refactoringsLabel.
-				#itemGroup 		-> 		40.
-				#itemOrder 		-> 		40.
-				#label 			-> 		'Move Instance Variable'.
-				#selector 		-> 		#contextualMoveInstanceVariable.
-				#icon 			-> 		#saveAsIcon
-		} asDictionary.
-	}`! !
+!TesisRefactoringMenu class methodsFor: 'initialization' stamp: 'jmv 7/30/2024 14:52:54'!
+initialize
+
+	BrowserWindow at: #classListMenuSpec registerMenuAndShortcutsSpecProvider:
+		(MessageSend receiver: self selector: #classListMenuSpec).
+
+	BrowserWindow at: #SmalltalkEditor registerMenuAndShortcutsSpecProvider:
+		(MessageSend receiver: TesisRefactoringMenu selector: #smalltalkEditorMenuSpec).! !
 
 !SmalltalkEditor methodsFor: '*MoveInstanceVariableRefactoring' stamp: 'mc 2/13/2023 19:08:22'!
 contextualMoveInstanceVariable
@@ -1564,11 +1558,6 @@ contextualMoveInstanceVariable
 		ifTrue: [ self contextualMoveInstanceVariableInClassDefinition ]
 		ifFalse: [ self contextualMoveInstanceVariableInMethod ].
 	! !
-
-!SmalltalkEditor methodsFor: '*MoveInstanceVariableRefactoring' stamp: 'mc 1/21/2023 14:29:32'!
-contextualMoveInstanceVariable: aKeyboardEvent
-	self contextualMoveInstanceVariable.
-	^true! !
 
 !SmalltalkEditor methodsFor: '*MoveInstanceVariableRefactoring' stamp: 'mc 1/9/2023 23:33:58'!
 contextualMoveInstanceVariableInClassDefinition 
@@ -1655,3 +1644,4 @@ registerMoveInstanceVariableApplier: aMoveInstanceVariableApplierClass
 
 	self registerApplierAt: self moveInstanceVariableApplierId with: aMoveInstanceVariableApplierClass! !
 MoveInstanceVariableApplier initialize!
+TesisRefactoringMenu initialize!
