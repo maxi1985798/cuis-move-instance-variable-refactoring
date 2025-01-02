@@ -1,6 +1,6 @@
-'From Cuis7.1 [latest update: #6578] on 10 August 2024 at 10:06:26 pm'!
+'From Cuis7.1 [latest update: #6611] on 2 January 2025 at 1:55:49 am'!
 'Description Udated to Cuis 7.1'!
-!provides: 'MoveInstanceVariableRefactoring' 1 50!
+!provides: 'MoveInstanceVariableRefactoring' 1 51!
 SystemOrganization addCategory: #MoveInstanceVariableRefactoring!
 
 
@@ -14,14 +14,24 @@ ParseNodeVisitor subclass: #CodeForNodeOnMethod
 CodeForNodeOnMethod class
 	instanceVariableNames: ''!
 
-!classDefinition: #MoveInstanceVariableTest category: #MoveInstanceVariableRefactoring!
-RefactoringTest subclass: #MoveInstanceVariableTest
+!classDefinition: #CodeForNodeResult category: #MoveInstanceVariableRefactoring!
+Object subclass: #CodeForNodeResult
+	instanceVariableNames: 'modifiedReads modifiedWrites resultCode'
+	classVariableNames: ''
+	poolDictionaries: ''
+	category: 'MoveInstanceVariableRefactoring'!
+!classDefinition: 'CodeForNodeResult class' category: #MoveInstanceVariableRefactoring!
+CodeForNodeResult class
+	instanceVariableNames: ''!
+
+!classDefinition: #MoveInstanceVariableMenu category: #MoveInstanceVariableRefactoring!
+Object subclass: #MoveInstanceVariableMenu
 	instanceVariableNames: ''
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'MoveInstanceVariableRefactoring'!
-!classDefinition: 'MoveInstanceVariableTest class' category: #MoveInstanceVariableRefactoring!
-MoveInstanceVariableTest class
+!classDefinition: 'MoveInstanceVariableMenu class' category: #MoveInstanceVariableRefactoring!
+MoveInstanceVariableMenu class
 	instanceVariableNames: ''!
 
 !classDefinition: #MoveInstanceVariableRefactoring category: #MoveInstanceVariableRefactoring!
@@ -54,32 +64,19 @@ MoveInstanceVariableApplier subclass: #MoveInstanceVariableWithActualScopeApplie
 MoveInstanceVariableWithActualScopeApplier class
 	instanceVariableNames: ''!
 
-!classDefinition: #CodeForNodeResult category: #MoveInstanceVariableRefactoring!
-Object subclass: #CodeForNodeResult
-	instanceVariableNames: 'modifiedReads modifiedWrites resultCode'
-	classVariableNames: ''
-	poolDictionaries: ''
-	category: 'MoveInstanceVariableRefactoring'!
-!classDefinition: 'CodeForNodeResult class' category: #MoveInstanceVariableRefactoring!
-CodeForNodeResult class
-	instanceVariableNames: ''!
-
-!classDefinition: #TesisRefactoringMenu category: #MoveInstanceVariableRefactoring!
-Object subclass: #TesisRefactoringMenu
+!classDefinition: #MoveInstanceVariableTest category: #MoveInstanceVariableRefactoring!
+RefactoringTest subclass: #MoveInstanceVariableTest
 	instanceVariableNames: ''
 	classVariableNames: ''
 	poolDictionaries: ''
 	category: 'MoveInstanceVariableRefactoring'!
-!classDefinition: 'TesisRefactoringMenu class' category: #MoveInstanceVariableRefactoring!
-TesisRefactoringMenu class
+!classDefinition: 'MoveInstanceVariableTest class' category: #MoveInstanceVariableRefactoring!
+MoveInstanceVariableTest class
 	instanceVariableNames: ''!
 
 
 !CodeForNodeOnMethod commentStamp: '<historical>' prior: 0!
 this class returns the code that belongs to "node" with "instanceVariableName" moved!
-
-!TesisRefactoringMenu commentStamp: '<historical>' prior: 0!
-Please remove this class after integration!
 
 !CodeForNodeOnMethod methodsFor: 'initialization' stamp: 'mc 4/4/2024 01:39:09'!
 initializeFor: aNode replace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVarNameToUseAsReceiver usingGetter: aGetterToUse usingSetter: aSetterToUse rejectingIntervals: intervals 
@@ -271,6 +268,293 @@ replace: instVarNameToReplace onMethod: aCompiledMethod accessingThrough: instVa
 		usingGetter: aGetterToUse
 		usingSetter: aSetterToUse
 		rejectingIntervals: intervals! !
+
+!CodeForNodeResult methodsFor: 'as yet unclassified' stamp: 'mc 4/4/2024 01:39:10'!
+initielizeWith: newCode modifiedReads: anAmountOfModifiedReads modifiedWrites: anAmountOfModifiedWrites
+	modifiedReads := anAmountOfModifiedReads .
+	modifiedWrites  := anAmountOfModifiedWrites .
+	resultCode := newCode .! !
+
+!CodeForNodeResult methodsFor: 'as yet unclassified' stamp: 'mc 4/4/2024 01:39:10'!
+modifiedReads
+	^modifiedReads ! !
+
+!CodeForNodeResult methodsFor: 'as yet unclassified' stamp: 'mc 4/4/2024 01:39:10'!
+modifiedWrites
+	^modifiedWrites ! !
+
+!CodeForNodeResult methodsFor: 'as yet unclassified' stamp: 'mc 4/4/2024 01:39:10'!
+resultCode
+	^resultCode ! !
+
+!CodeForNodeResult class methodsFor: 'instance creation' stamp: 'mc 4/4/2024 01:39:10'!
+newWith: newCode modifiedReads: modifiedReads modifiedWrites: modifiedWrites
+	^self new initielizeWith: newCode modifiedReads: modifiedReads modifiedWrites: modifiedWrites! !
+
+!MoveInstanceVariableMenu class methodsFor: 'menu & kbd shortcuts' stamp: 'HAW 12/31/2024 18:47:33'!
+classListMenuSpec
+	
+	^#(
+		#(1095		'Move Inst Var...' 					nil 		window 			contextualMoveInstanceVariable 						saveAsIcon)
+	)! !
+
+!MoveInstanceVariableMenu class methodsFor: 'menu & kbd shortcuts' stamp: 'jmv 7/30/2024 14:52:32'!
+smalltalkEditorMenuSpec
+	"
+	BrowserWindow at: #SmalltalkEditor registerMenuAndShortcutsSpecProvider:
+		(MessageSend receiver: TesisRefactoringMenu selector: #smalltalkEditorMenuSpec).
+	Do this in TesisRefactoringMenu class >> initialize
+	"
+	^#(
+		#(2160		'Move Instance Variable' 					$Y 		editor 			contextualMoveInstanceVariable
+				saveAsIcon							'Move instance variable what is under cursor')
+	)! !
+
+!MoveInstanceVariableMenu class methodsFor: 'initialization' stamp: 'HAW 12/31/2024 18:48:04'!
+initialize
+
+	BrowserWindow at: #classListMenuSpec registerMenuAndShortcutsSpecProvider:
+		(MessageSend receiver: self selector: #classListMenuSpec).
+
+	BrowserWindow at: #SmalltalkEditor registerMenuAndShortcutsSpecProvider:
+		(MessageSend receiver: MoveInstanceVariableMenu selector: #smalltalkEditorMenuSpec).! !
+
+!MoveInstanceVariableRefactoring methodsFor: 'initialization' stamp: 'mc 4/4/2024 01:39:10'!
+initializeNamed: anInstVarNameSourceClass from: aSourceClass to: aTargetClass accessingThrough: anInstVarNameTargetClass usingGetter: aGetterSelector usingSetter: aSetterSelector 
+	instVarNameSourceClass := anInstVarNameSourceClass.
+	sourceClass := aSourceClass.
+	targetClass := aTargetClass.
+	instVarNameTargetClass := anInstVarNameTargetClass.
+	modifiedReads := 0.
+	modifiedWrites := 0.
+	getterToUse := aGetterSelector.
+	setterToUse := aSetterSelector! !
+
+!MoveInstanceVariableRefactoring methodsFor: 'applying' stamp: 'mc 4/4/2024 01:39:10'!
+apply
+	self replaceAccessInSourceClass.
+	targetClass addInstVarName: instVarNameSourceClass.
+	sourceClass removeInstVarName: instVarNameSourceClass.
+	modifiedReads = 0 ifFalse: [ self createGetterOnTargetClass ].
+	modifiedWrites = 0 ifFalse: [ self createSetterOnTargetClass ].! !
+
+!MoveInstanceVariableRefactoring methodsFor: 'private' stamp: 'mc 4/4/2024 01:39:10'!
+accessInSourceClass
+	| accessMethods |
+	accessMethods := OrderedCollection new.
+	sourceClass withAllSubclassesDo: [ :aSubClass | | selectorsAccessingIV | 
+		selectorsAccessingIV := (aSubClass whichSelectorsAccess: instVarNameSourceClass) asOrderedCollection .
+		accessMethods addAll: ( selectorsAccessingIV collect: [ :aSelector | aSubClass methodDict at: aSelector ])
+		].
+	^ accessMethods! !
+
+!MoveInstanceVariableRefactoring methodsFor: 'private' stamp: 'mc 4/4/2024 01:39:10'!
+compileSource: sourceCode on: aTargetClass 
+	^ aTargetClass 
+		compile: sourceCode
+		classified: self class getterSetterCategoryName ! !
+
+!MoveInstanceVariableRefactoring methodsFor: 'private' stamp: 'mc 4/4/2024 01:39:10'!
+createGetterOnTargetClass
+	^self 
+		compileSource: getterToUse, String newLineString, String tab, '^', instVarNameSourceClass 
+		on: targetClass 
+! !
+
+!MoveInstanceVariableRefactoring methodsFor: 'private' stamp: 'mc 4/4/2024 01:39:10'!
+createSetterOnTargetClass
+	^self 
+		compileSource: setterToUse , ' anObject', String newLineString, String tab, '^', instVarNameSourceClass, ' := anObject.' 
+		on: targetClass.! !
+
+!MoveInstanceVariableRefactoring methodsFor: 'private' stamp: 'mc 4/4/2024 01:39:10'!
+replaceAccessInSourceClass
+	| newSource result |
+	self accessInSourceClass do: [ :aMethod | | replacer |
+		 replacer := CodeForNodeOnMethod 
+			replace: instVarNameSourceClass 
+			onMethod: aMethod 
+			accessingThrough: instVarNameTargetClass
+			usingGetter: getterToUse
+			usingSetter: setterToUse .
+		result := replacer value.
+		newSource := result resultCode.
+		aMethod methodClass compile: newSource.
+		modifiedReads := modifiedReads + result modifiedReads.
+		modifiedWrites := modifiedWrites + result modifiedWrites.
+		]! !
+
+!MoveInstanceVariableRefactoring class methodsFor: 'error messages' stamp: 'mc 4/4/2024 01:39:10'!
+getterExistsOnTargetHierarchyErrorMessage
+
+	^ 'getter exists on target hierarchy'! !
+
+!MoveInstanceVariableRefactoring class methodsFor: 'error messages' stamp: 'mc 4/4/2024 01:39:10'!
+instanceVariableExistsOnTargetHierarchyErrorMessage
+
+	^ 'instance variable exists on target hierarchy'! !
+
+!MoveInstanceVariableRefactoring class methodsFor: 'error messages' stamp: 'mc 4/4/2024 01:39:10'!
+instanceVariableToAccessThroughShouldExistOnSourceClassErrorMessage
+	^'instance variable to access through does not exists on source class'.! !
+
+!MoveInstanceVariableRefactoring class methodsFor: 'error messages' stamp: 'mc 4/21/2024 01:03:03'!
+instanceVariableToAccessingThroughShouldHaveAtLeastOneAssignationErrorMessage: instanceVariableName
+	^'Instance variable ', instanceVariableName, ' should have at least one assignation'! !
+
+!MoveInstanceVariableRefactoring class methodsFor: 'error messages' stamp: 'mc 4/4/2024 01:39:10'!
+instanceVariableToMoveShouldExistOnSourceClassErrorMessage
+	^'instance variable does not exists on source class'.! !
+
+!MoveInstanceVariableRefactoring class methodsFor: 'error messages' stamp: 'mc 4/4/2024 01:39:10'!
+setterExistsOnTargetHierarchyErrorMessage
+	^'setter exists on target hierarchy'! !
+
+!MoveInstanceVariableRefactoring class methodsFor: 'error messages' stamp: 'mc 4/4/2024 01:39:10'!
+souceClassAndTargetClassCanNotBeTheSameErrorMessage
+	^'source class and target class can not be the same'.! !
+
+!MoveInstanceVariableRefactoring class methodsFor: 'error messages' stamp: 'mc 4/4/2024 01:39:10'!
+targetClassCanNotBeSubClassOfSourceClassErrorMessage
+	^'Target class can not be sub class of source class. Use push-down refactoring'! !
+
+!MoveInstanceVariableRefactoring class methodsFor: 'error messages' stamp: 'mc 4/4/2024 01:39:10'!
+targetClassCanNotBeSuperClassOfSourceClassErrorMessage
+	^'Target class can not be super class of source class. Use push-up refactoring'! !
+
+!MoveInstanceVariableRefactoring class methodsFor: 'instance creation' stamp: 'HAW 8/10/2024 20:54:26'!
+existsAssignationOf: instanceVariable inHierarchyOf: sourceClass 
+	| existsAssignation |
+	existsAssignation := false.
+	sourceClass withAllSuperAndSubclassesDo: [ :aClassInSourceHierachy |  
+		existsAssignation := existsAssignation or: [(aClassInSourceHierachy whichSelectorsStoreInto: instanceVariable) notEmpty] 
+	].
+	^existsAssignation.! !
+
+!MoveInstanceVariableRefactoring class methodsFor: 'instance creation' stamp: 'mc 4/4/2024 01:39:10'!
+named: instVarNameSourceClass from: sourceClass to: targetClass accessingThrough: instVarNameTargetClass 
+	^self 
+		named: instVarNameSourceClass
+		from: sourceClass
+		to: targetClass
+		accessingThrough: instVarNameTargetClass
+		usingGetter: instVarNameSourceClass asSymbol.! !
+
+!MoveInstanceVariableRefactoring class methodsFor: 'instance creation' stamp: 'mc 4/4/2024 01:39:10'!
+named: instVarNameSourceClass from: sourceClass to: targetClass accessingThrough: instVarNameTargetClass  usingGetter: aGetterSelector 
+
+	^self  
+		named: instVarNameSourceClass
+		from: sourceClass
+		to: targetClass
+		accessingThrough: instVarNameTargetClass
+		usingGetter: aGetterSelector 
+		usingSetter: (instVarNameSourceClass, ':') asSymbol ! !
+
+!MoveInstanceVariableRefactoring class methodsFor: 'instance creation' stamp: 'mc 4/21/2024 00:59:41'!
+named: instVarNameSourceClass from: sourceClass to: targetClass accessingThrough: instVarNameTargetClass  usingGetter: aGetterSelector usingSetter: aSetterSelector 
+
+	(sourceClass = targetClass) ifTrue: [ self refactoringError: self souceClassAndTargetClassCanNotBeTheSameErrorMessage ].
+	(targetClass allSubclasses includes: sourceClass) ifTrue: [ self refactoringError: self targetClassCanNotBeSuperClassOfSourceClassErrorMessage ].
+	(sourceClass allSubclasses includes: targetClass) ifTrue: [ self refactoringError: self targetClassCanNotBeSubClassOfSourceClassErrorMessage ].
+	(targetClass allSelectors includes: aGetterSelector) ifTrue: [ self refactoringError: self getterExistsOnTargetHierarchyErrorMessage ].
+	(targetClass allInstVarNamesEverywhere includes: instVarNameSourceClass) ifTrue: [ self refactoringError: self instanceVariableExistsOnTargetHierarchyErrorMessage ].
+	(targetClass allSelectors includes: aSetterSelector) ifTrue: [ self refactoringError: self setterExistsOnTargetHierarchyErrorMessage ].
+	(sourceClass instVarNames includes: instVarNameSourceClass) ifFalse: [ self refactoringError: self instanceVariableToMoveShouldExistOnSourceClassErrorMessage ].
+	(sourceClass allInstVarNames includes: instVarNameTargetClass) ifFalse: [ self refactoringError: self instanceVariableToAccessThroughShouldExistOnSourceClassErrorMessage ].
+	
+	(self existsAssignationOf: instVarNameTargetClass inHierarchyOf: sourceClass ) ifFalse: [ self refactoringWarning: (self instanceVariableToAccessingThroughShouldHaveAtLeastOneAssignationErrorMessage: instVarNameTargetClass) ].
+	^self new initializeNamed: instVarNameSourceClass from: sourceClass to: targetClass accessingThrough: instVarNameTargetClass usingGetter: aGetterSelector usingSetter: aSetterSelector ! !
+
+!MoveInstanceVariableRefactoring class methodsFor: 'category name' stamp: 'mc 4/4/2024 01:39:10'!
+getterSetterCategoryName
+	^'getter-setter'! !
+
+!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 4/4/2024 01:39:10'!
+askTargetClassName
+	| targetClassNameTmp initialAnswer |
+	initialAnswer := self initialAnswerForInstanceVariable: accessingThroughinstanceVariableName in: classToRefactor.
+	targetClassNameTmp := ClassNameRequestMorph request: 'Enter target class name:' initialAnswer: initialAnswer orCancel: requestExitBlock.
+	"self halt."
+	targetClassNameTmp := targetClassNameTmp withoutSeparators.
+	targetClass := Smalltalk at: targetClassNameTmp asSymbol ifAbsent: [Refactoring refactoringErrorClass signal: 'Cant find the target class'].! !
+
+!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 4/4/2024 01:39:10'!
+chooseInstanceVariableToAccessThrough
+	| vars index |
+	"self halt."
+	vars _ classToRefactor allInstVarNames sorted.
+	vars _ vars reject: [ :anInstanceVariable | anInstanceVariable = instanceVariableName ].
+	vars isEmpty ifTrue: [Refactoring refactoringErrorClass signal: 'There is no instance variable to access through' ].
+	
+	index _ (PopUpMenu labelArray: vars lines: #()) startUpWithCaption: self selectVariableLabel.
+	index = 0 ifTrue: [^self endRequest].
+	accessingThroughinstanceVariableName := vars at: index.! !
+
+!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 4/4/2024 01:39:10'!
+chooseInstanceVariableToMove
+	instanceVariableName ifNotNil: [ ^self ].
+	
+	classToRefactor 
+		chooseDefiningInstanceVariableAlphabeticallyWith: self selectVariableToMoveLabel
+		thenDo: [ :anInstanceVariable | ^instanceVariableName := anInstanceVariable ].
+		
+	self endRequest ! !
+
+!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 4/4/2024 01:39:10'!
+createRefactoring
+	^MoveInstanceVariableRefactoring 
+		named: instanceVariableName 
+		from: classToRefactor 
+		to: targetClass
+		accessingThrough: accessingThroughinstanceVariableName.! !
+
+!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 4/4/2024 01:39:10'!
+initialAnswerForInstanceVariable: anAccessingThroughinstanceVariableName in: aSourceClass 
+	
+	^''! !
+
+!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 4/4/2024 01:39:10'!
+requestRefactoringParameters
+
+	self 
+		chooseInstanceVariableToMove;
+		selectClassWichInstaceVariableIsDefined;
+		chooseInstanceVariableToAccessThrough;
+		askTargetClassName! !
+
+!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 4/4/2024 01:39:10'!
+selectClassWichInstaceVariableIsDefined
+	| classToRefactorWithIVDefined |
+	"self halt."
+	classToRefactorWithIVDefined := classToRefactor whichClassDefinesInstanceVariable: instanceVariableName ifNone: [Refactoring refactoringErrorClass signal: 'Instance variable ', instanceVariableName, ' does not exist in ', targetClass name, ' herarchy'].
+	classToRefactorWithIVDefined = classToRefactor ifFalse: [ 
+		Refactoring refactoringWarning: 'Instance variable ', instanceVariableName, ' is not defined on class ', classToRefactor name.
+		classToRefactor := classToRefactorWithIVDefined ]! !
+
+!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 4/4/2024 01:39:10'!
+selectVariableLabel
+	^'Select variable to access through'! !
+
+!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 4/4/2024 01:39:10'!
+selectVariableToMoveLabel
+	^'Choose instance variable to move'! !
+
+!MoveInstanceVariableApplier class methodsFor: 'as yet unclassified' stamp: 'mc 4/4/2024 01:39:10'!
+initialize
+	(Smalltalk classNamed: #LiveTyping) ifNotNil: [
+		RefactoringApplier 
+			registerMoveInstanceVariableApplier: MoveInstanceVariableWithActualScopeApplier .
+	].! !
+
+!MoveInstanceVariableWithActualScopeApplier methodsFor: 'as yet unclassified' stamp: 'mc 6/17/2024 15:53:03'!
+initialAnswerForInstanceVariable: anAccessingThroughinstanceVariableName in: aSourceClass 
+	
+	| liveTypingTypes |
+	classToRefactor shouldLiveTypingBeDisabled ifTrue: [^''].
+	accessingThroughinstanceVariableName ifNil: [^''].
+	liveTypingTypes := classToRefactor commonSupertypeOfInstanceVariableNamed: accessingThroughinstanceVariableName ifNoTypes: [^''].
+	^liveTypingTypes name asString ! !
 
 !MoveInstanceVariableTest methodsFor: 'validations' stamp: 'mc 4/4/2024 01:39:10'!
 test36_validation_getterMessageShouldntExistsOnTarget
@@ -1260,296 +1544,11 @@ test34CodeWithDiferentStructureInClousureShouldBeRefactored
 		]' equals: (sourceClass compiledMethodAt: #accessIv1) sourceCode.
 	! !
 
-!MoveInstanceVariableRefactoring methodsFor: 'initialization' stamp: 'mc 4/4/2024 01:39:10'!
-initializeNamed: anInstVarNameSourceClass from: aSourceClass to: aTargetClass accessingThrough: anInstVarNameTargetClass usingGetter: aGetterSelector usingSetter: aSetterSelector 
-	instVarNameSourceClass := anInstVarNameSourceClass.
-	sourceClass := aSourceClass.
-	targetClass := aTargetClass.
-	instVarNameTargetClass := anInstVarNameTargetClass.
-	modifiedReads := 0.
-	modifiedWrites := 0.
-	getterToUse := aGetterSelector.
-	setterToUse := aSetterSelector! !
-
-!MoveInstanceVariableRefactoring methodsFor: 'applying' stamp: 'mc 4/4/2024 01:39:10'!
-apply
-	self replaceAccessInSourceClass.
-	targetClass addInstVarName: instVarNameSourceClass.
-	sourceClass removeInstVarName: instVarNameSourceClass.
-	modifiedReads = 0 ifFalse: [ self createGetterOnTargetClass ].
-	modifiedWrites = 0 ifFalse: [ self createSetterOnTargetClass ].! !
-
-!MoveInstanceVariableRefactoring methodsFor: 'private' stamp: 'mc 4/4/2024 01:39:10'!
-accessInSourceClass
-	| accessMethods |
-	accessMethods := OrderedCollection new.
-	sourceClass withAllSubclassesDo: [ :aSubClass | | selectorsAccessingIV | 
-		selectorsAccessingIV := (aSubClass whichSelectorsAccess: instVarNameSourceClass) asOrderedCollection .
-		accessMethods addAll: ( selectorsAccessingIV collect: [ :aSelector | aSubClass methodDict at: aSelector ])
-		].
-	^ accessMethods! !
-
-!MoveInstanceVariableRefactoring methodsFor: 'private' stamp: 'mc 4/4/2024 01:39:10'!
-compileSource: sourceCode on: aTargetClass 
-	^ aTargetClass 
-		compile: sourceCode
-		classified: self class getterSetterCategoryName ! !
-
-!MoveInstanceVariableRefactoring methodsFor: 'private' stamp: 'mc 4/4/2024 01:39:10'!
-createGetterOnTargetClass
-	^self 
-		compileSource: getterToUse, String newLineString, String tab, '^', instVarNameSourceClass 
-		on: targetClass 
-! !
-
-!MoveInstanceVariableRefactoring methodsFor: 'private' stamp: 'mc 4/4/2024 01:39:10'!
-createSetterOnTargetClass
-	^self 
-		compileSource: setterToUse , ' anObject', String newLineString, String tab, '^', instVarNameSourceClass, ' := anObject.' 
-		on: targetClass.! !
-
-!MoveInstanceVariableRefactoring methodsFor: 'private' stamp: 'mc 4/4/2024 01:39:10'!
-replaceAccessInSourceClass
-	| newSource result |
-	self accessInSourceClass do: [ :aMethod | | replacer |
-		 replacer := CodeForNodeOnMethod 
-			replace: instVarNameSourceClass 
-			onMethod: aMethod 
-			accessingThrough: instVarNameTargetClass
-			usingGetter: getterToUse
-			usingSetter: setterToUse .
-		result := replacer value.
-		newSource := result resultCode.
-		aMethod methodClass compile: newSource.
-		modifiedReads := modifiedReads + result modifiedReads.
-		modifiedWrites := modifiedWrites + result modifiedWrites.
-		]! !
-
-!MoveInstanceVariableRefactoring class methodsFor: 'error messages' stamp: 'mc 4/4/2024 01:39:10'!
-getterExistsOnTargetHierarchyErrorMessage
-
-	^ 'getter exists on target hierarchy'! !
-
-!MoveInstanceVariableRefactoring class methodsFor: 'error messages' stamp: 'mc 4/4/2024 01:39:10'!
-instanceVariableExistsOnTargetHierarchyErrorMessage
-
-	^ 'instance variable exists on target hierarchy'! !
-
-!MoveInstanceVariableRefactoring class methodsFor: 'error messages' stamp: 'mc 4/4/2024 01:39:10'!
-instanceVariableToAccessThroughShouldExistOnSourceClassErrorMessage
-	^'instance variable to access through does not exists on source class'.! !
-
-!MoveInstanceVariableRefactoring class methodsFor: 'error messages' stamp: 'mc 4/21/2024 01:03:03'!
-instanceVariableToAccessingThroughShouldHaveAtLeastOneAssignationErrorMessage: instanceVariableName
-	^'Instance variable ', instanceVariableName, ' should have at least one assignation'! !
-
-!MoveInstanceVariableRefactoring class methodsFor: 'error messages' stamp: 'mc 4/4/2024 01:39:10'!
-instanceVariableToMoveShouldExistOnSourceClassErrorMessage
-	^'instance variable does not exists on source class'.! !
-
-!MoveInstanceVariableRefactoring class methodsFor: 'error messages' stamp: 'mc 4/4/2024 01:39:10'!
-setterExistsOnTargetHierarchyErrorMessage
-	^'setter exists on target hierarchy'! !
-
-!MoveInstanceVariableRefactoring class methodsFor: 'error messages' stamp: 'mc 4/4/2024 01:39:10'!
-souceClassAndTargetClassCanNotBeTheSameErrorMessage
-	^'source class and target class can not be the same'.! !
-
-!MoveInstanceVariableRefactoring class methodsFor: 'error messages' stamp: 'mc 4/4/2024 01:39:10'!
-targetClassCanNotBeSubClassOfSourceClassErrorMessage
-	^'Target class can not be sub class of source class. Use push-down refactoring'! !
-
-!MoveInstanceVariableRefactoring class methodsFor: 'error messages' stamp: 'mc 4/4/2024 01:39:10'!
-targetClassCanNotBeSuperClassOfSourceClassErrorMessage
-	^'Target class can not be super class of source class. Use push-up refactoring'! !
-
-!MoveInstanceVariableRefactoring class methodsFor: 'instance creation' stamp: 'HAW 8/10/2024 20:54:26'!
-existsAssignationOf: instanceVariable inHierarchyOf: sourceClass 
-	| existsAssignation |
-	existsAssignation := false.
-	sourceClass withAllSuperAndSubclassesDo: [ :aClassInSourceHierachy |  
-		existsAssignation := existsAssignation or: [(aClassInSourceHierachy whichSelectorsStoreInto: instanceVariable) notEmpty] 
-	].
-	^existsAssignation.! !
-
-!MoveInstanceVariableRefactoring class methodsFor: 'instance creation' stamp: 'mc 4/4/2024 01:39:10'!
-named: instVarNameSourceClass from: sourceClass to: targetClass accessingThrough: instVarNameTargetClass 
-	^self 
-		named: instVarNameSourceClass
-		from: sourceClass
-		to: targetClass
-		accessingThrough: instVarNameTargetClass
-		usingGetter: instVarNameSourceClass asSymbol.! !
-
-!MoveInstanceVariableRefactoring class methodsFor: 'instance creation' stamp: 'mc 4/4/2024 01:39:10'!
-named: instVarNameSourceClass from: sourceClass to: targetClass accessingThrough: instVarNameTargetClass  usingGetter: aGetterSelector 
-
-	^self  
-		named: instVarNameSourceClass
-		from: sourceClass
-		to: targetClass
-		accessingThrough: instVarNameTargetClass
-		usingGetter: aGetterSelector 
-		usingSetter: (instVarNameSourceClass, ':') asSymbol ! !
-
-!MoveInstanceVariableRefactoring class methodsFor: 'instance creation' stamp: 'mc 4/21/2024 00:59:41'!
-named: instVarNameSourceClass from: sourceClass to: targetClass accessingThrough: instVarNameTargetClass  usingGetter: aGetterSelector usingSetter: aSetterSelector 
-
-	(sourceClass = targetClass) ifTrue: [ self refactoringError: self souceClassAndTargetClassCanNotBeTheSameErrorMessage ].
-	(targetClass allSubclasses includes: sourceClass) ifTrue: [ self refactoringError: self targetClassCanNotBeSuperClassOfSourceClassErrorMessage ].
-	(sourceClass allSubclasses includes: targetClass) ifTrue: [ self refactoringError: self targetClassCanNotBeSubClassOfSourceClassErrorMessage ].
-	(targetClass allSelectors includes: aGetterSelector) ifTrue: [ self refactoringError: self getterExistsOnTargetHierarchyErrorMessage ].
-	(targetClass allInstVarNamesEverywhere includes: instVarNameSourceClass) ifTrue: [ self refactoringError: self instanceVariableExistsOnTargetHierarchyErrorMessage ].
-	(targetClass allSelectors includes: aSetterSelector) ifTrue: [ self refactoringError: self setterExistsOnTargetHierarchyErrorMessage ].
-	(sourceClass instVarNames includes: instVarNameSourceClass) ifFalse: [ self refactoringError: self instanceVariableToMoveShouldExistOnSourceClassErrorMessage ].
-	(sourceClass allInstVarNames includes: instVarNameTargetClass) ifFalse: [ self refactoringError: self instanceVariableToAccessThroughShouldExistOnSourceClassErrorMessage ].
-	
-	(self existsAssignationOf: instVarNameTargetClass inHierarchyOf: sourceClass ) ifFalse: [ self refactoringWarning: (self instanceVariableToAccessingThroughShouldHaveAtLeastOneAssignationErrorMessage: instVarNameTargetClass) ].
-	^self new initializeNamed: instVarNameSourceClass from: sourceClass to: targetClass accessingThrough: instVarNameTargetClass usingGetter: aGetterSelector usingSetter: aSetterSelector ! !
-
-!MoveInstanceVariableRefactoring class methodsFor: 'category name' stamp: 'mc 4/4/2024 01:39:10'!
-getterSetterCategoryName
-	^'getter-setter'! !
-
-!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 4/4/2024 01:39:10'!
-askTargetClassName
-	| targetClassNameTmp initialAnswer |
-	initialAnswer := self initialAnswerForInstanceVariable: accessingThroughinstanceVariableName in: classToRefactor.
-	targetClassNameTmp := ClassNameRequestMorph request: 'Enter target class name:' initialAnswer: initialAnswer orCancel: requestExitBlock.
-	"self halt."
-	targetClassNameTmp := targetClassNameTmp withoutSeparators.
-	targetClass := Smalltalk at: targetClassNameTmp asSymbol ifAbsent: [Refactoring refactoringErrorClass signal: 'Cant find the target class'].! !
-
-!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 4/4/2024 01:39:10'!
-chooseInstanceVariableToAccessThrough
-	| vars index |
-	"self halt."
-	vars _ classToRefactor allInstVarNames sorted.
-	vars _ vars reject: [ :anInstanceVariable | anInstanceVariable = instanceVariableName ].
-	vars isEmpty ifTrue: [Refactoring refactoringErrorClass signal: 'There is no instance variable to access through' ].
-	
-	index _ (PopUpMenu labelArray: vars lines: #()) startUpWithCaption: self selectVariableLabel.
-	index = 0 ifTrue: [^self endRequest].
-	accessingThroughinstanceVariableName := vars at: index.! !
-
-!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 4/4/2024 01:39:10'!
-chooseInstanceVariableToMove
-	instanceVariableName ifNotNil: [ ^self ].
-	
-	classToRefactor 
-		chooseDefiningInstanceVariableAlphabeticallyWith: self selectVariableToMoveLabel
-		thenDo: [ :anInstanceVariable | ^instanceVariableName := anInstanceVariable ].
-		
-	self endRequest ! !
-
-!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 4/4/2024 01:39:10'!
-createRefactoring
-	^MoveInstanceVariableRefactoring 
-		named: instanceVariableName 
-		from: classToRefactor 
-		to: targetClass
-		accessingThrough: accessingThroughinstanceVariableName.! !
-
-!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 4/4/2024 01:39:10'!
-initialAnswerForInstanceVariable: anAccessingThroughinstanceVariableName in: aSourceClass 
-	
-	^''! !
-
-!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 4/4/2024 01:39:10'!
-requestRefactoringParameters
-
-	self 
-		chooseInstanceVariableToMove;
-		selectClassWichInstaceVariableIsDefined;
-		chooseInstanceVariableToAccessThrough;
-		askTargetClassName! !
-
-!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 4/4/2024 01:39:10'!
-selectClassWichInstaceVariableIsDefined
-	| classToRefactorWithIVDefined |
-	"self halt."
-	classToRefactorWithIVDefined := classToRefactor whichClassDefinesInstanceVariable: instanceVariableName ifNone: [Refactoring refactoringErrorClass signal: 'Instance variable ', instanceVariableName, ' does not exist in ', targetClass name, ' herarchy'].
-	classToRefactorWithIVDefined = classToRefactor ifFalse: [ 
-		Refactoring refactoringWarning: 'Instance variable ', instanceVariableName, ' is not defined on class ', classToRefactor name.
-		classToRefactor := classToRefactorWithIVDefined ]! !
-
-!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 4/4/2024 01:39:10'!
-selectVariableLabel
-	^'Select variable to access through'! !
-
-!MoveInstanceVariableApplier methodsFor: 'refactoring - parameters request' stamp: 'mc 4/4/2024 01:39:10'!
-selectVariableToMoveLabel
-	^'Choose instance variable to move'! !
-
-!MoveInstanceVariableApplier class methodsFor: 'as yet unclassified' stamp: 'mc 4/4/2024 01:39:10'!
-initialize
-	(Smalltalk classNamed: #LiveTyping) ifNotNil: [
-		RefactoringApplier 
-			registerMoveInstanceVariableApplier: MoveInstanceVariableWithActualScopeApplier .
-	].! !
-
-!MoveInstanceVariableWithActualScopeApplier methodsFor: 'as yet unclassified' stamp: 'mc 6/17/2024 15:53:03'!
-initialAnswerForInstanceVariable: anAccessingThroughinstanceVariableName in: aSourceClass 
-	
-	| liveTypingTypes |
-	classToRefactor shouldLiveTypingBeDisabled ifTrue: [^''].
-	accessingThroughinstanceVariableName ifNil: [^''].
-	liveTypingTypes := classToRefactor commonSupertypeOfInstanceVariableNamed: accessingThroughinstanceVariableName ifNoTypes: [^''].
-	^liveTypingTypes name asString ! !
-
-!CodeForNodeResult methodsFor: 'as yet unclassified' stamp: 'mc 4/4/2024 01:39:10'!
-initielizeWith: newCode modifiedReads: anAmountOfModifiedReads modifiedWrites: anAmountOfModifiedWrites
-	modifiedReads := anAmountOfModifiedReads .
-	modifiedWrites  := anAmountOfModifiedWrites .
-	resultCode := newCode .! !
-
-!CodeForNodeResult methodsFor: 'as yet unclassified' stamp: 'mc 4/4/2024 01:39:10'!
-modifiedReads
-	^modifiedReads ! !
-
-!CodeForNodeResult methodsFor: 'as yet unclassified' stamp: 'mc 4/4/2024 01:39:10'!
-modifiedWrites
-	^modifiedWrites ! !
-
-!CodeForNodeResult methodsFor: 'as yet unclassified' stamp: 'mc 4/4/2024 01:39:10'!
-resultCode
-	^resultCode ! !
-
-!CodeForNodeResult class methodsFor: 'instance creation' stamp: 'mc 4/4/2024 01:39:10'!
-newWith: newCode modifiedReads: modifiedReads modifiedWrites: modifiedWrites
-	^self new initielizeWith: newCode modifiedReads: modifiedReads modifiedWrites: modifiedWrites! !
-
-!TesisRefactoringMenu class methodsFor: 'menu & kbd shortcuts' stamp: 'jmv 7/30/2024 14:42:22'!
-classListMenuSpec
-	"
-	BrowserWindow at: #classListMenuSpec registerMenuAndShortcutsSpecProvider:
-		(MessageSend receiver: TesisRefactoringMenu selector: #classListMenuSpec).
-	Do this in TesisRefactoringMenu class >> initialize
-	"
-	^#(
-		#(1081		'move inst var...' 					nil 		window 			contextualMoveInstanceVariable 						saveAsIcon)
-	)! !
-
-!TesisRefactoringMenu class methodsFor: 'menu & kbd shortcuts' stamp: 'jmv 7/30/2024 14:52:32'!
-smalltalkEditorMenuSpec
-	"
-	BrowserWindow at: #SmalltalkEditor registerMenuAndShortcutsSpecProvider:
-		(MessageSend receiver: TesisRefactoringMenu selector: #smalltalkEditorMenuSpec).
-	Do this in TesisRefactoringMenu class >> initialize
-	"
-	^#(
-		#(2160		'Move Instance Variable' 					$Y 		editor 			contextualMoveInstanceVariable
-				saveAsIcon							'Move instance variable what is under cursor')
-	)! !
-
-!TesisRefactoringMenu class methodsFor: 'initialization' stamp: 'jmv 7/30/2024 14:52:54'!
-initialize
-
-	BrowserWindow at: #classListMenuSpec registerMenuAndShortcutsSpecProvider:
-		(MessageSend receiver: self selector: #classListMenuSpec).
-
-	BrowserWindow at: #SmalltalkEditor registerMenuAndShortcutsSpecProvider:
-		(MessageSend receiver: TesisRefactoringMenu selector: #smalltalkEditorMenuSpec).! !
+!BrowserWindow methodsFor: '*MoveInstanceVariableRefactoring' stamp: 'mc 12/11/2023 02:06:42'!
+contextualMoveInstanceVariable
+"self halt."
+	model selectedClassOrMetaClass ifNotNil: [ :aClass |
+		(RefactoringApplier moveInstanceVariableApplier on: model at: aClass ) value].! !
 
 !SmalltalkEditor methodsFor: '*MoveInstanceVariableRefactoring' stamp: 'mc 2/13/2023 19:08:22'!
 contextualMoveInstanceVariable
@@ -1623,12 +1622,6 @@ moveInstanceVariableOn: aBrowser for: anInstanceVariableName at: aClassToRefacto
 	"self halt."
 	(RefactoringApplier moveInstanceVariableApplier on: aBrowser for: anInstanceVariableName at: aClassToRefactor) value! !
 
-!BrowserWindow methodsFor: '*MoveInstanceVariableRefactoring' stamp: 'mc 12/11/2023 02:06:42'!
-contextualMoveInstanceVariable
-"self halt."
-	model selectedClassOrMetaClass ifNotNil: [ :aClass |
-		(RefactoringApplier moveInstanceVariableApplier on: model at: aClass ) value].! !
-
 !RefactoringApplier class methodsFor: '*MoveInstanceVariableRefactoring' stamp: 'mc 12/11/2023 01:54:26'!
 moveInstanceVariableApplier
 	"self halt."
@@ -1643,5 +1636,5 @@ moveInstanceVariableApplierId
 registerMoveInstanceVariableApplier: aMoveInstanceVariableApplierClass
 
 	self registerApplierAt: self moveInstanceVariableApplierId with: aMoveInstanceVariableApplierClass! !
+MoveInstanceVariableMenu initialize!
 MoveInstanceVariableApplier initialize!
-TesisRefactoringMenu initialize!
