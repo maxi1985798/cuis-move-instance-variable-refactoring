@@ -1,6 +1,6 @@
-'From Cuis7.1 [latest update: #6611] on 2 January 2025 at 1:55:49 am'!
+'From Cuis7.3 [latest update: #6973] on 15 January 2025 at 8:00:24 pm'!
 'Description Udated to Cuis 7.1'!
-!provides: 'MoveInstanceVariableRefactoring' 1 51!
+!provides: 'MoveInstanceVariableRefactoring' 1 52!
 SystemOrganization addCategory: #MoveInstanceVariableRefactoring!
 
 
@@ -679,7 +679,7 @@ test42_instanceVariableToAccessThroughShouldExistsOnSourceHierarchy
 	self assert: (targetClass instVarNames includes: 'iv1').
 	! !
 
-!MoveInstanceVariableTest methodsFor: 'validations' stamp: 'mc 4/21/2024 00:57:51'!
+!MoveInstanceVariableTest methodsFor: 'validations' stamp: 'mc 1/15/2025 19:55:00'!
 test42_instanceVariableToAccessThroughShouldHaveOneAssignationAtLeast
 
 	| sourceClass targetClass |
@@ -690,7 +690,7 @@ test42_instanceVariableToAccessThroughShouldHaveOneAssignationAtLeast
 	self 
 		should: [ MoveInstanceVariableRefactoring named: 'iv1' from: sourceClass to: targetClass accessingThrough: 'iv2'. ]  
 		raise: self refactoringWarning 
-		withMessageText: [MoveMethodRefactoring instanceVariableToAccessingThroughShouldHaveAtLeastOneAssignationErrorMessage: 'iv2'].
+		withMessageText: [MoveInstanceVariableRefactoring instanceVariableToAccessingThroughShouldHaveAtLeastOneAssignationErrorMessage: 'iv2'].
 	! !
 
 !MoveInstanceVariableTest methodsFor: 'validations' stamp: 'mc 4/4/2024 01:39:11'!
